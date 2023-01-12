@@ -1,5 +1,6 @@
-## Notes
+# Notes
 
+## Wasmtime
 The program panics if we do not run the executable with the appropriate [capabilities](https://en.wikipedia.org/wiki/Capability-based_security).
 
 ![screenshot](./images/no_capability_panic.png)
@@ -21,6 +22,14 @@ Where:
 
 In summary the program will have access to the `HOST_DIRECTORY` via the specified `GUEST_DIRECTORY`
 
-## References
+### References
 
 https://wasmbyexample.dev/examples/wasi-hello-world/wasi-hello-world.rust.en-us.html
+
+## Wasmer
+
+With wasmer everything runs smoothly, no need to specify capabilities, in fact
+
+`wasmer run target/wasm32-wasi/debug/file.wasm`
+
+![screenshot](./images/wasmer_ok.png)
