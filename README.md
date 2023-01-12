@@ -5,3 +5,4 @@ The repository contains my bachelor thesis on [Rust](https://www.rust-lang.org/i
 
 - [what is wasi](https://www.infoq.com/presentations/wasi-system-interface/)
 - [capability-based security](https://en.wikipedia.org/wiki/Capability-based_security)
+- [wasm by example](https://github.com/torch2424/wasm-by-example)
