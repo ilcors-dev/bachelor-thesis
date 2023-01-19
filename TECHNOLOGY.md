@@ -69,11 +69,16 @@ The [wasmer docs](https://wasmer.io/wasmer-vs-wasmtime) say the following:
     | Ruby         | ❌        | ✅      |
 
 ### Considerations
-It actually seems that wasmer is a little more mature than wasmtime.
+- It actually seems that wasmer is a little more mature than wasmtime.
 
-Github stats at time of writing (2023-01-13):
+  Github stats at time of writing (2023-01-13):
 
-| Github  | Wasmtime | Wasmer |
-| ------- | -------- | ------ |
-| Stars   | 11.2k    | 14.2k  |
-| Commits | 10724    | 13428  |
+  | Github  | Wasmtime | Wasmer |
+  | ------- | -------- | ------ |
+  | Stars   | 11.2k    | 14.2k  |
+  | Commits | 10724    | 13428  |
+
+- Wasmtime is developed by the bytecode allience which is a non-profit behind the actual WASI standard which is backed by [Fastly](https://www.fastly.com/)
+
+### Links about differences between wasmtime and wasmer
+- https://news.ycombinator.com/item?id=27540994
