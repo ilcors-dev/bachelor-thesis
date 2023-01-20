@@ -1,0 +1,1 @@
+/Users/ilcors-dev/Desktop/projects/bachelor-thesis/prototypes/2.network/target/debug/network: /Users/ilcors-dev/Desktop/projects/bachelor-thesis/prototypes/2.network/src/client.rs /Users/ilcors-dev/Desktop/projects/bachelor-thesis/prototypes/2.network/src/main.rs /Users/ilcors-dev/Desktop/projects/bachelor-thesis/prototypes/2.network/src/server.rs
