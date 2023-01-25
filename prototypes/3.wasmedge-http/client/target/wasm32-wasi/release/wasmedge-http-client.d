@@ -1,0 +1,1 @@
+/Users/ilcors-dev/Desktop/projects/bachelor-thesis/prototypes/3.wasmedge-http/client/target/wasm32-wasi/release/wasmedge-http-client.wasm: /Users/ilcors-dev/Desktop/projects/bachelor-thesis/prototypes/3.wasmedge-http/client/src/main.rs
