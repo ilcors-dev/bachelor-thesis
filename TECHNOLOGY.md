@@ -32,16 +32,15 @@ Wasmer also provides a number of features for managing memory, such as the abili
 
 ## Wasmetime vs Wasmer
 
-| Feature           | Wasmtime | Wasmer |
-| ----------------- | -------- | ------ |
-| WASI              | ✅        | ✅      |
-| Memory management | ✅        | ✅      |
-| Multi-threading   | ✅        | ✅      |
-| Cranelift         | ✅        | ✅      |
-| Lightbeam         | ✅        | ❌      |
-| LLVM              | ❌        | ✅      |
-| WASI              | ✅        | ✅      |
-| Headless          | ✅        | ❌      |
+| Feature           | Wasmtime | Wasmer | WasmEdge |
+| ----------------- | -------- | ------ | -------- |
+| WASI              | ✅        | ✅      | ✅        |
+| Memory management | ✅        | ✅      | ✅        |
+| Multi-threading   | ✅        | ✅      | ✅        |
+| Cranelift         | ✅        | ✅      | ✅        |
+| Lightbeam         | ✅        | ❌      | ❌        |
+| LLVM              | ❌        | ✅      | ❌        |
+| Headless          | ✅        | ❌      | ❌        |
 
 The [wasmer docs](https://wasmer.io/wasmer-vs-wasmtime) say the following:
 - wasmer is faster than wasmtime during startup (~1000x)
@@ -51,34 +50,36 @@ The [wasmer docs](https://wasmer.io/wasmer-vs-wasmtime) say the following:
 - it supports other compilers other than cranelift
 - integrates with more languages
 
-    | Language     | Wasmtime | Wasmer |
-    | ------------ | -------- | ------ |
-    | Go           | ✅        | ✅      |
-    | Python       | ✅        | ✅      |
-    | Ruby         | ❌        | ✅      |
-    | PHP          | ❌        | ✅      |
-    | Java         | ❌        | ✅      |
-    | C#           | ❌        | ✅      |
-    | C            | ✅        | ✅      |
-    | C++          | ❌        | ✅      |
-    | Rust         | ✅        | ✅      |
-    | Javascript   | ❌        | ✅      |
-    | R            | ❌        | ✅      |
-    | Elixir       | ❌        | ✅      |
-    | Postgres (?) | ❌        | ✅      |
-    | Ruby         | ❌        | ✅      |
+    | Language     | Wasmtime | Wasmer | WasmEdge |
+    | ------------ | -------- | ------ | -------- |
+    | Go           | ✅        | ✅      | ✅        |
+    | Python       | ✅        | ✅      | ❌        |
+    | Ruby         | ❌        | ✅      | ❌        |
+    | PHP          | ❌        | ✅      | ❌        |
+    | Java         | ❌        | ✅      | ❌        |
+    | C#           | ❌        | ✅      | ❌        |
+    | C            | ✅        | ✅      | ✅        |
+    | C++          | ❌        | ✅      | ❌        |
+    | Rust         | ✅        | ✅      | ✅        |
+    | Javascript   | ❌        | ✅      | ✅        |
+    | R            | ❌        | ✅      | ❌        |
+    | Elixir       | ❌        | ✅      | ❌        |
+    | Postgres (?) | ❌        | ✅      | ❌        |
+    | Ruby         | ❌        | ✅      | ❌        |
 
 ### Considerations
 - It actually seems that wasmer is a little more mature than wasmtime.
 
   Github stats at time of writing (2023-01-13):
 
-  | Github  | Wasmtime | Wasmer |
-  | ------- | -------- | ------ |
-  | Stars   | 11.2k    | 14.2k  |
-  | Commits | 10724    | 13428  |
+  | Github  | Wasmtime | Wasmer | WasmEdge |
+  | ------- | -------- | ------ | -------- |
+  | Stars   | 11.2k    | 14.2k  | 5.3k     |
+  | Commits | 10724    | 13428  | 2477     |
 
 - Wasmtime is developed by the bytecode allience which is a non-profit behind the actual WASI standard which is backed by [Fastly](https://www.fastly.com/)
+
+- WasmEdge is another competitor to wasmtime and wasmer. It is developed by [WebAssembly Edge](https://www.wasmedge.org/). It's focus seems to be serverless and edge computing.
 
 ### Links about differences between wasmtime and wasmer
 - https://news.ycombinator.com/item?id=27540994
