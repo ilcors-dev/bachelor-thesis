@@ -15,3 +15,5 @@ The repository contains my bachelor thesis on [Rust](https://www.rust-lang.org/i
 - [how to add a wasi syscall](https://radu-matei.com/blog/adding-wasi-syscall/)
 - [adding a wasi syscall in depth](https://bytecodealliance.org/articles/implementing-wasi-nn-in-wasmtime)
 - [video on wasi, from minute 35:45](https://youtu.be/lP_qdhAHFlg?t=2145)
+- [wasmedge](https://wasmedge.org/book/en/index.html)
+- [wasmedge ssr application](https://wasmedge.org/book/en/write_wasm/rust/ssr.html)
