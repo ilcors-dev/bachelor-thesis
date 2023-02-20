@@ -1,0 +1,15 @@
+[package]
+name = "percy-router"
+version = "0.3.1"
+authors = ["Chinedu Francis Nwafili <frankie.nwafili@gmail.com>"]
+edition = "2018"
+description = "A router for client side web applications with server side rendering support"
+keywords = ["webassembly", "wasm", "router", "route", "url"]
+license = "MIT/Apache-2.0"
+repository = "https://github.com/chinedufn/percy"
+documentation = "https://chinedufn.github.io/percy/api/percy_router/"
+
+
+[dependencies]
+percy-dom = { path = "../percy-dom", version = "0.7.1"}
+percy-router-macro = { path = "../percy-router-macro", version = "0.1.5" }

@@ -1,0 +1,22 @@
+[package]
+name = "isomorphic-server"
+version = "0.1.0"
+authors = ["Chinedu Francis Nwafili <frankie.nwafili@gmail.com>"]
+publish = false
+edition = "2018"
+
+[features]
+default = ["with-actix"]
+with-actix = ["actix-web", "actix-files", "actix-rt", "serde"]
+
+[dependencies]
+chrono = "0.4.6"
+isomorphic-app = { path = "../app" }
+env_logger = "0.6.1"
+percy-dom = { path = "../crates/percy-dom" }
+
+# with-actix
+actix-web = {optional = true, version = "1.0.3"}
+actix-files = {optional = true, version = "0.1.3"}
+actix-rt = {optional = true, version = "0.2.3"}
+serde = {optional = true, version = "1.0.94"}

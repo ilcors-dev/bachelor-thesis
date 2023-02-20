@@ -1,0 +1,13 @@
+[package]
+name = "percy-css"
+version = "0.1.1"
+description = "Percy CSS"
+authors = ["Chinedu Francis Nwafili <frankie.nwafili@gmail.com>"]
+keywords = ["percy", "css", "browser", "web"]
+license = "MIT/Apache-2.0"
+repository = "https://github.com/chinedufn/percy"
+documentation = "https://chinedufn.github.io/percy/api/percy_css/"
+edition = "2018"
+
+[dependencies]
+percy-css-macro = {path = "../percy-css-macro", version = "0.1.1"}

@@ -1,0 +1,12 @@
+/home/ilcors/Desktop/projects/bachelor-thesis/prototypes/5.fullstack/server-wasmedge/target/wasm32-wasi/debug/deps/parsed-7c702e8d3a0092cd.rmeta: /home/ilcors/.cargo/registry/src/github.com-1ecc6299db9ec823/parsed-0.3.0/src/lib.rs /home/ilcors/.cargo/registry/src/github.com-1ecc6299db9ec823/parsed-0.3.0/src/stream.rs /home/ilcors/.cargo/registry/src/github.com-1ecc6299db9ec823/parsed-0.3.0/src/matcher.rs /home/ilcors/.cargo/registry/src/github.com-1ecc6299db9ec823/parsed-0.3.0/src/parser.rs /home/ilcors/.cargo/registry/src/github.com-1ecc6299db9ec823/parsed-0.3.0/src/http.rs /home/ilcors/.cargo/registry/src/github.com-1ecc6299db9ec823/parsed-0.3.0/src/ws.rs
+
+/home/ilcors/Desktop/projects/bachelor-thesis/prototypes/5.fullstack/server-wasmedge/target/wasm32-wasi/debug/deps/libparsed-7c702e8d3a0092cd.rlib: /home/ilcors/.cargo/registry/src/github.com-1ecc6299db9ec823/parsed-0.3.0/src/lib.rs /home/ilcors/.cargo/registry/src/github.com-1ecc6299db9ec823/parsed-0.3.0/src/stream.rs /home/ilcors/.cargo/registry/src/github.com-1ecc6299db9ec823/parsed-0.3.0/src/matcher.rs /home/ilcors/.cargo/registry/src/github.com-1ecc6299db9ec823/parsed-0.3.0/src/parser.rs /home/ilcors/.cargo/registry/src/github.com-1ecc6299db9ec823/parsed-0.3.0/src/http.rs /home/ilcors/.cargo/registry/src/github.com-1ecc6299db9ec823/parsed-0.3.0/src/ws.rs
+
+/home/ilcors/Desktop/projects/bachelor-thesis/prototypes/5.fullstack/server-wasmedge/target/wasm32-wasi/debug/deps/parsed-7c702e8d3a0092cd.d: /home/ilcors/.cargo/registry/src/github.com-1ecc6299db9ec823/parsed-0.3.0/src/lib.rs /home/ilcors/.cargo/registry/src/github.com-1ecc6299db9ec823/parsed-0.3.0/src/stream.rs /home/ilcors/.cargo/registry/src/github.com-1ecc6299db9ec823/parsed-0.3.0/src/matcher.rs /home/ilcors/.cargo/registry/src/github.com-1ecc6299db9ec823/parsed-0.3.0/src/parser.rs /home/ilcors/.cargo/registry/src/github.com-1ecc6299db9ec823/parsed-0.3.0/src/http.rs /home/ilcors/.cargo/registry/src/github.com-1ecc6299db9ec823/parsed-0.3.0/src/ws.rs
+
+/home/ilcors/.cargo/registry/src/github.com-1ecc6299db9ec823/parsed-0.3.0/src/lib.rs:
+/home/ilcors/.cargo/registry/src/github.com-1ecc6299db9ec823/parsed-0.3.0/src/stream.rs:
+/home/ilcors/.cargo/registry/src/github.com-1ecc6299db9ec823/parsed-0.3.0/src/matcher.rs:
+/home/ilcors/.cargo/registry/src/github.com-1ecc6299db9ec823/parsed-0.3.0/src/parser.rs:
+/home/ilcors/.cargo/registry/src/github.com-1ecc6299db9ec823/parsed-0.3.0/src/http.rs:
+/home/ilcors/.cargo/registry/src/github.com-1ecc6299db9ec823/parsed-0.3.0/src/ws.rs:

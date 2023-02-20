@@ -1,0 +1,10 @@
+/home/ilcors/Desktop/projects/bachelor-thesis/prototypes/5.fullstack/server-wasmedge/target/wasm32-wasi/debug/deps/percy_router-7c2ee7cba99b4539.rmeta: /home/ilcors/Desktop/projects/bachelor-thesis/prototypes/5.fullstack/crates/percy-router/src/lib.rs /home/ilcors/Desktop/projects/bachelor-thesis/prototypes/5.fullstack/crates/percy-router/src/provided.rs /home/ilcors/Desktop/projects/bachelor-thesis/prototypes/5.fullstack/crates/percy-router/src/route.rs /home/ilcors/Desktop/projects/bachelor-thesis/prototypes/5.fullstack/crates/percy-router/src/router.rs
+
+/home/ilcors/Desktop/projects/bachelor-thesis/prototypes/5.fullstack/server-wasmedge/target/wasm32-wasi/debug/deps/libpercy_router-7c2ee7cba99b4539.rlib: /home/ilcors/Desktop/projects/bachelor-thesis/prototypes/5.fullstack/crates/percy-router/src/lib.rs /home/ilcors/Desktop/projects/bachelor-thesis/prototypes/5.fullstack/crates/percy-router/src/provided.rs /home/ilcors/Desktop/projects/bachelor-thesis/prototypes/5.fullstack/crates/percy-router/src/route.rs /home/ilcors/Desktop/projects/bachelor-thesis/prototypes/5.fullstack/crates/percy-router/src/router.rs
+
+/home/ilcors/Desktop/projects/bachelor-thesis/prototypes/5.fullstack/server-wasmedge/target/wasm32-wasi/debug/deps/percy_router-7c2ee7cba99b4539.d: /home/ilcors/Desktop/projects/bachelor-thesis/prototypes/5.fullstack/crates/percy-router/src/lib.rs /home/ilcors/Desktop/projects/bachelor-thesis/prototypes/5.fullstack/crates/percy-router/src/provided.rs /home/ilcors/Desktop/projects/bachelor-thesis/prototypes/5.fullstack/crates/percy-router/src/route.rs /home/ilcors/Desktop/projects/bachelor-thesis/prototypes/5.fullstack/crates/percy-router/src/router.rs
+
+/home/ilcors/Desktop/projects/bachelor-thesis/prototypes/5.fullstack/crates/percy-router/src/lib.rs:
+/home/ilcors/Desktop/projects/bachelor-thesis/prototypes/5.fullstack/crates/percy-router/src/provided.rs:
+/home/ilcors/Desktop/projects/bachelor-thesis/prototypes/5.fullstack/crates/percy-router/src/route.rs:
+/home/ilcors/Desktop/projects/bachelor-thesis/prototypes/5.fullstack/crates/percy-router/src/router.rs:

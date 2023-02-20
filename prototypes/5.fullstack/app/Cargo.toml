@@ -1,0 +1,16 @@
+[package]
+name = "isomorphic-app"
+version = "0.1.0"
+authors = ["Chinedu Francis Nwafili <frankie.nwafili@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+percy-css-macro = { path = "../crates/percy-css-macro"}
+percy-dom = { path = "../crates/percy-dom" }
+percy-router = { path = "../crates/percy-router"}
+log = "0.4.6"
+serde = { version = "1", features = ["rc", "derive"] }
+serde_json = "1"
+wasm-bindgen = { version = "0.2.45", features = ["serde-serialize"] }
+web-sys = "0.3.10"
+js-sys = "0.3.2"
