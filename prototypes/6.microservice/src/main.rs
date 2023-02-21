@@ -107,6 +107,8 @@ async fn handle_request(req: Request<Body>, pool: Pool) -> Result<Response<Body>
                 .ignore(&mut conn)
                 .await?;
 
+            info!("inserted message");
+
             drop(conn);
             Ok(response_ok(json!({"status": true}).to_string()))
         }
@@ -135,7 +137,7 @@ async fn handle_request(req: Request<Body>, pool: Pool) -> Result<Response<Body>
             let mut conn = pool.get_conn().await.unwrap();
 
             let byte_stream = hyper::body::to_bytes(req).await?;
-            let message: Message = serde_json::from_slice(&byte_stream).unwrap();
+            let message: message::Message = serde_json::from_slice(&byte_stream).unwrap();
 
             "UPDATE messages SET text=:text WHERE id=:id"
                 .with(params! {
