@@ -23,7 +23,9 @@ export const Chat = () => {
 			).json(),
 		{
 			onSuccess: () =>
-				bottomRef.current?.scrollIntoView({ behavior: 'smooth' }),
+				(bottomRef.current as unknown as HTMLDivElement)?.scrollIntoView({
+					behavior: 'smooth',
+				}),
 		}
 	);
 
