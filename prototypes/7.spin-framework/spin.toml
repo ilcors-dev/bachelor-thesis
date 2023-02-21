@@ -1,0 +1,14 @@
+spin_version = "1"
+authors = ["Fermyon Engineering <engineering@fermyon.com>"]
+description = "Your first Fermyon Cloud application"
+name = "hello"
+trigger = { type = "http", base = "/" }
+version = "0.1.0"
+
+[[component]]
+id = "hello"
+source = "target/wasm32-wasi/release/hello.wasm"
+[component.trigger]
+route = "/hello"
+[component.build]
+command = "cargo build --target wasm32-wasi --release"

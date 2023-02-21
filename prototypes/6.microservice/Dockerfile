@@ -22,8 +22,8 @@ RUN --mount=type=cache,target=/usr/local/cargo/git/db \
     --mount=type=cache,target=/usr/local/cargo/registry/index \
     cargo build --target wasm32-wasi --release
 # This line builds the AOT Wasm binary
-RUN /root/.wasmedge/bin/wasmedgec target/wasm32-wasi/release/order_demo_service.wasm order_demo_service.wasm
+RUN /root/.wasmedge/bin/wasmedgec target/wasm32-wasi/release/wasi_microservice_chat.wasm wasi_microservice_chat.wasm
 
 FROM scratch
-ENTRYPOINT [ "order_demo_service.wasm" ]
-COPY --link --from=build /src/order_demo_service.wasm /order_demo_service.wasm
+ENTRYPOINT [ "wasi_microservice_chat.wasm" ]
+COPY --link --from=build /src/wasi_microservice_chat.wasm /wasi_microservice_chat.wasm

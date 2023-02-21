@@ -13,11 +13,14 @@ services:
     ports:
       - 8080:8080
     environment:
-      DATABASE_URL: mysql://root:whalehello@db:3306/mysql
+      DATABASE_URL: mysql://root:bachelor@db:3306/wasi-chat
       RUST_BACKTRACE: full
     restart: unless-stopped
     runtime: io.containerd.wasmedge.v1
   db:
     image: mariadb:10.9
+    ports:
+      - '3306:3306'
     environment:
-      MYSQL_ROOT_PASSWORD: whalehello
+      MYSQL_ROOT_PASSWORD: bachelor
+      MARIADB_DATABASE: wasi-chat

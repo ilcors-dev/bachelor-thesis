@@ -1,198 +1,190 @@
+#[macro_use] extern crate log;
+extern crate simplelog;
+
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Method, Request, Response, StatusCode, Server};
 pub use mysql_async::prelude::*;
 pub use mysql_async::*;
+use serde_json::json;
+use simplelog::*;
+use std::collections::HashMap;
 use std::convert::Infallible;
+use std::fs::File;
 use std::net::SocketAddr;
 use std::result::Result;
-use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
+use ulid::{self, Ulid};
 
-fn get_url() -> String {
-    if let Ok(url) = std::env::var("DATABASE_URL") {
-        let opts = Opts::from_url(&url).expect("DATABASE_URL invalid");
-        if opts
-            .db_name()
-            .expect("a database name is required")
-            .is_empty()
-        {
-            panic!("database name is empty");
-        }
-        url
-    } else {
-        "mysql://root:pass@127.0.0.1:3306/mysql".into()
+mod message;
+
+// using planescale database (not working, ssl / tls not supported by wasi mysql module yet)
+// fn get_db_url() -> String {
+//     let url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+//         "mysql://ypmltdihr6v3aq1ag3hv:pscale_pw_nEKjjpm4FVkXoqwQsCiWxPJEIYK8qq7hItMxMK9bAwp@pscale_pw_nEKjjpm4FVkXoqwQsCiWxPJEIYK8qq7hItMxMK9bAwp/bachelor-thesis".into()
+//     });
+
+//     if url.is_empty() {
+//         panic!("DATABASE_URL is empty");
+//     }
+
+//     let opts = Opts::from_url(&url).expect("DATABASE_URL invalid");
+
+//     if opts
+//         .db_name()
+//         .expect("a database name is required")
+//         .is_empty()
+//     {
+//         panic!("database name is empty");
+//     }
+
+//     print!("Database connection setup with: {}", url);
+
+//     url
+// }
+
+fn get_db_url() -> String {
+    let url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+        "mysql://root:bachelor@127.0.0.1:3306/wasi-chat".into()
+    });
+
+    if url.is_empty() {
+        panic!("DATABASE_URL is empty");
     }
-}
 
-#[derive(Serialize, Deserialize, Debug)]
-struct Order {
-    order_id: i32,
-    product_id: i32,
-    quantity: i32,
-    amount: f32,
-    shipping: f32,
-    tax: f32,
-    shipping_address: String,
-}
+    let opts = Opts::from_url(&url).expect("DATABASE_URL invalid");
 
-impl Order {
-    fn new(
-        order_id: i32,
-        product_id: i32,
-        quantity: i32,
-        amount: f32,
-        shipping: f32,
-        tax: f32,
-        shipping_address: String,
-    ) -> Self {
-        Self {
-            order_id,
-            product_id,
-            quantity,
-            amount,
-            shipping,
-            tax,
-            shipping_address,
-        }
+    if opts
+        .db_name()
+        .expect("a database name is required")
+        .is_empty()
+    {
+        panic!("database name is empty");
     }
+
+    info!("Database connection setup with: {}", url);
+
+    url
 }
 
 async fn handle_request(req: Request<Body>, pool: Pool) -> Result<Response<Body>, anyhow::Error> {
     match (req.method(), req.uri().path()) {
         (&Method::GET, "/") => Ok(Response::new(Body::from(
-            "The valid endpoints are /init /create_order /create_orders /update_order /orders /delete_order",
+            "The valid endpoints are /init /create_message /create_messages /update_message /messages /delete_message",
         ))),
 
-        // Simply echo the body back to the client.
         (&Method::POST, "/echo") => Ok(Response::new(req.into_body())),
 
         // CORS OPTIONS
-        (&Method::OPTIONS, "/init") => Ok(response_build(&String::from(""))),
-        (&Method::OPTIONS, "/create_order") => Ok(response_build(&String::from(""))),
-        (&Method::OPTIONS, "/create_orders") => Ok(response_build(&String::from(""))),
-        (&Method::OPTIONS, "/update_order") => Ok(response_build(&String::from(""))),
-        (&Method::OPTIONS, "/delete_order") => Ok(response_build(&String::from(""))),
-        (&Method::OPTIONS, "/orders") => Ok(response_build(&String::from(""))),
+        (&Method::OPTIONS, "/init") => Ok(response_ok(String::from(""))),
+        (&Method::OPTIONS, "/create_message") => Ok(response_ok(String::from(""))),
+        (&Method::OPTIONS, "/create_messages") => Ok(response_ok(String::from(""))),
+        (&Method::OPTIONS, "/update_message") => Ok(response_ok(String::from(""))),
+        (&Method::OPTIONS, "/delete_message") => Ok(response_ok(String::from(""))),
+        (&Method::OPTIONS, "/messages") => Ok(response_ok(String::from(""))),
         
         (&Method::GET, "/init") => {
+            info!("Initializing database");
             let mut conn = pool.get_conn().await.unwrap();
-            "DROP TABLE IF EXISTS orders;".ignore(&mut conn).await?;
-            "CREATE TABLE orders (order_id INT, product_id INT, quantity INT, amount FLOAT, shipping FLOAT, tax FLOAT, shipping_address VARCHAR(256));".ignore(&mut conn).await?;
+            
+            "DROP TABLE IF EXISTS messages;".ignore(&mut conn).await?;
+            "CREATE TABLE messages (id INT AUTO_INCREMENT PRIMARY KEY, ulid CHAR(26), text LONGTEXT, created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP);".ignore(&mut conn).await?;
             drop(conn);
-            Ok(response_build("{\"status\":true}"))
+
+            info!("Database initialized successfully");
+            Ok(response_ok(json!({"status": true}).to_string()))
         }
 
-        (&Method::POST, "/create_order") => {
+        (&Method::POST, "/create_message") => {
             let mut conn = pool.get_conn().await.unwrap();
 
             let byte_stream = hyper::body::to_bytes(req).await?;
-            let order: Order = serde_json::from_slice(&byte_stream).unwrap();
+            let message: message::InsertMessage = serde_json::from_slice(&byte_stream).unwrap();
 
-            "INSERT INTO orders (order_id, product_id, quantity, amount, shipping, tax, shipping_address) VALUES (:order_id, :product_id, :quantity, :amount, :shipping, :tax, :shipping_address)"
+            "INSERT INTO messages (ulid, text) VALUES (:ulid, :text)"
                 .with(params! {
-                    "order_id" => order.order_id,
-                    "product_id" => order.product_id,
-                    "quantity" => order.quantity,
-                    "amount" => order.amount,
-                    "shipping" => order.shipping,
-                    "tax" => order.tax,
-                    "shipping_address" => &order.shipping_address,
+                    "ulid" => Ulid::new().to_string(),
+                    "text" => &message.text,
                 })
                 .ignore(&mut conn)
                 .await?;
 
             drop(conn);
-            Ok(response_build("{\"status\":true}"))
-            // Ok(Response::new(Body::from("{\"status\":true}")))
+            Ok(response_ok(json!({"status": true}).to_string()))
         }
 
-        (&Method::POST, "/create_orders") => {
+        (&Method::POST, "/create_messages") => {
             let mut conn = pool.get_conn().await.unwrap();
 
             let byte_stream = hyper::body::to_bytes(req).await?;
-            let orders: Vec<Order> = serde_json::from_slice(&byte_stream).unwrap();
-
-            "INSERT INTO orders (order_id, product_id, quantity, amount, shipping, tax, shipping_address) VALUES (:order_id, :product_id, :quantity, :amount, :shipping, :tax, :shipping_address)"
-                .with(orders.iter().map(|order| {
+            let messages: Vec<message::InsertMessage> = serde_json::from_slice(&byte_stream).unwrap();
+            info!("messages: {:?}", messages);
+            "INSERT INTO messages (ulid, text) VALUES (:ulid, :text)"
+                .with(messages.iter().map(|message| {
                     params! {
-                        "order_id" => order.order_id,
-                        "product_id" => order.product_id,
-                        "quantity" => order.quantity,
-                        "amount" => order.amount,
-                        "shipping" => order.shipping,
-                        "tax" => order.tax,
-                        "shipping_address" => &order.shipping_address,
+                        "ulid" => Ulid::new().to_string(),
+                        "text" => &message.text,
                     }
                 }))
                 .batch(&mut conn)
                 .await?;
 
             drop(conn);
-            Ok(response_build("{\"status\":true}"))
-            // Ok(Response::new(Body::from("{\"status\":true}")))
+            Ok(response_ok(json!({"status": true}).to_string()))
         }
 
-        (&Method::POST, "/update_order") => {
+        (&Method::POST, "/update_message") => {
             let mut conn = pool.get_conn().await.unwrap();
 
             let byte_stream = hyper::body::to_bytes(req).await?;
-            let order: Order = serde_json::from_slice(&byte_stream).unwrap();
+            let message: Message = serde_json::from_slice(&byte_stream).unwrap();
 
-            "UPDATE orders SET product_id=:product_id, quantity=:quantity, amount=:amount, shipping=:shipping, tax=:tax, shipping_address=:shipping_address WHERE order_id=:order_id"
+            "UPDATE messages SET text=:text WHERE id=:id"
                 .with(params! {
-                    "product_id" => order.product_id,
-                    "quantity" => order.quantity,
-                    "amount" => order.amount,
-                    "shipping" => order.shipping,
-                    "tax" => order.tax,
-                    "shipping_address" => &order.shipping_address,
-                    "order_id" => order.order_id,
+                    "text" => &message.text,
                 })
                 .ignore(&mut conn)
                 .await?;
 
             drop(conn);
-            Ok(response_build("{\"status\":true}"))
-            // Ok(Response::new(Body::from("{\"status\":true}")))
+            Ok(response_ok(json!({"status": true}).to_string()))
         }
 
-        (&Method::GET, "/orders") => {
+        (&Method::GET, "/messages") => {
             let mut conn = pool.get_conn().await.unwrap();
 
-            let orders = "SELECT * FROM orders"
+            let messages = "SELECT * FROM messages"
                 .with(())
-                .map(&mut conn, |(order_id, product_id, quantity, amount, shipping, tax, shipping_address)| {
-                    Order::new(
-                        order_id,
-                        product_id,
-                        quantity,
-                        amount,
-                        shipping,
-                        tax,
-                        shipping_address,
+                .map(&mut conn, |(id, ulid, text, created_at, updated_at)| {
+                    message::Message::new(
+                        id,
+                        ulid,
+                        text,
+                        created_at,
+                        updated_at,
                     )},
                 ).await?;
 
             drop(conn);
-            Ok(response_build(serde_json::to_string(&orders)?.as_str()))
-            // Ok(Response::new(Body::from(serde_json::to_string(&orders)?)))
+
+            info!("total messages count: {}", messages.iter().count());
+
+            Ok(response_ok(serde_json::to_string(&messages)?.to_string()))
         }        
         
-        (&Method::GET, "/delete_order") => {
+        (&Method::GET, "/delete_message") => {
             let mut conn = pool.get_conn().await.unwrap();
 
             let params: HashMap<String, String> = req.uri().query().map(|v| {
                 url::form_urlencoded::parse(v.as_bytes()).into_owned().collect()
             }).unwrap_or_else(HashMap::new);
-            let order_id = params.get("id");
+            let id = params.get("id");
 
-            "DELETE FROM orders WHERE order_id=:order_id"
-                .with(params! { "order_id" => order_id, })
+            "DELETE FROM messages WHERE id=:id"
+                .with(params! { "id" => id, })
                 .ignore(&mut conn)
                 .await?;
 
             drop(conn);
-            Ok(response_build("{\"status\":true}"))
+            Ok(response_ok(json!({"status": true}).to_string()))
             // Ok(Response::new(Body::from("{\"status\":true}")))
         }
 
@@ -206,7 +198,7 @@ async fn handle_request(req: Request<Body>, pool: Pool) -> Result<Response<Body>
 }
 
 // CORS headers
-fn response_build(body: &str) -> Response<Body> {
+fn response_ok(body: String) -> Response<Body> {
     Response::builder()
         .header("Access-Control-Allow-Origin", "*")
         .header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
@@ -217,12 +209,19 @@ fn response_build(body: &str) -> Response<Body> {
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    let opts = Opts::from_url(&*get_url()).unwrap();
+    CombinedLogger::init(vec![WriteLogger::new(simplelog::LevelFilter::Info, Config::default(), File::create("log.txt").unwrap())]).unwrap();
+
+    info!("Connecting to MySQL...");
+    let opts = Opts::from_url(get_db_url().as_str()).unwrap();
+    
     let builder = OptsBuilder::from_opts(opts);
     // The connection pool will have a min of 5 and max of 10 connections.
     let constraints = PoolConstraints::new(5, 10).unwrap();
     let pool_opts = PoolOpts::default().with_constraints(constraints);
     let pool = Pool::new(builder.pool_opts(pool_opts));
+
+    info!("Connected to MySQL to database");
+    info!("Starting server...");
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
     let make_svc = make_service_fn(|_| {
