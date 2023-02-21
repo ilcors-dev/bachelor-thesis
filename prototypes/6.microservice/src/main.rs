@@ -19,7 +19,7 @@ mod message;
 // using planescale database (not working, ssl / tls not supported by wasi mysql module yet)
 // fn get_db_url() -> String {
 //     let url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
-//         "mysql://ypmltdihr6v3aq1ag3hv:pscale_pw_nEKjjpm4FVkXoqwQsCiWxPJEIYK8qq7hItMxMK9bAwp@pscale_pw_nEKjjpm4FVkXoqwQsCiWxPJEIYK8qq7hItMxMK9bAwp/bachelor-thesis".into()
+//         "mysql://user:pass@url/db".into()
 //     });
 
 //     if url.is_empty() {
