@@ -22,10 +22,17 @@ export const Chat = () => {
 				})
 			).json(),
 		{
-			onSuccess: () =>
-				(bottomRef.current as unknown as HTMLDivElement)?.scrollIntoView({
-					behavior: 'smooth',
-				}),
+			onSuccess: (messages) => {
+				if (!messages || messages.length === 0) {
+					return;
+				}
+
+				setTimeout(() => {
+					(bottomRef.current as unknown as HTMLDivElement)?.scrollIntoView({
+						behavior: 'smooth',
+					});
+				}, 50);
+			},
 		}
 	);
 
