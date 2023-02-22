@@ -6,8 +6,8 @@ services:
     volumes:
       - ./client:/usr/share/nginx/html
   server:
-    image: demo-microservice
-    platform: wasi/wasm
+    image: ilcorsdev/wasi-chat
+    platform: wasi/wasm32
     build:
       context: .
     ports:
