@@ -1,3 +1,5 @@
+import moment from 'moment';
+
 interface Props {
 	message: Message;
 	className?: string;
@@ -10,7 +12,7 @@ export const Message = ({ message, className }: Props) => {
 		>
 			<p>{message.text}</p>
 			<p className="text-xs text-gray-500 dark:text-gray-400">
-				{new Date(message.created_at).toLocaleString()}
+				{moment(message.created_at).toLocaleString()}
 			</p>
 		</li>
 	);
