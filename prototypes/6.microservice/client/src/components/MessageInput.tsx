@@ -1,6 +1,7 @@
 import { ArrowRightIcon } from '@heroicons/react/20/solid';
 import { useState } from 'react';
-import { UseMutateFunction, useMutation, useQueryClient } from 'react-query';
+import { useMutation, useQueryClient } from 'react-query';
+import { InputEmoji } from './InputEmoji';
 
 interface Props {
 	className?: string;
@@ -30,6 +31,7 @@ export const MessageInput = ({ className }: Props) => {
 			className={`${className}`}
 		>
 			<div className="flex space-x-4">
+				<InputEmoji />
 				<textarea
 					required={true}
 					id="message"
@@ -37,6 +39,7 @@ export const MessageInput = ({ className }: Props) => {
 					className="block w-full grow rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
 					placeholder="Write your thoughts here..."
 					onChange={(e) => setMessage(e.target.value)}
+					value={message}
 				></textarea>
 				<button
 					type="submit"
