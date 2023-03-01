@@ -1,4 +1,5 @@
 import { ArrowRightIcon } from '@heroicons/react/20/solid';
+import { Textarea } from 'flowbite-react';
 import { useState } from 'react';
 import { useMutation, useQueryClient } from 'react-query';
 import { InputEmoji } from './InputEmoji';
@@ -31,16 +32,17 @@ export const MessageInput = ({ className }: Props) => {
 			className={`${className}`}
 		>
 			<div className="flex space-x-4">
-				<InputEmoji />
-				<textarea
-					required={true}
-					id="message"
-					rows={4}
-					className="block w-full grow rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+				<InputEmoji
+					handleEmojiClick={(emoji) => setMessage(message + emoji.emoji)}
+				/>
+				<Textarea
+					id="comment"
 					placeholder="Write your thoughts here..."
+					required={true}
+					rows={4}
+					defaultValue={message}
 					onChange={(e) => setMessage(e.target.value)}
-					value={message}
-				></textarea>
+				/>
 				<button
 					type="submit"
 					className="mr-2 w-max shrink rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
