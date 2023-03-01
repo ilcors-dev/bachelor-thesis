@@ -2,6 +2,7 @@ import '@picocss/pico';
 import moment from 'moment';
 import 'moment/locale/it';
 import { Chat } from './components/Chat';
+import 'flowbite';
 
 moment.locale('it');
 
