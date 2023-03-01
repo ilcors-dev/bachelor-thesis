@@ -6,6 +6,7 @@ import { InputEmoji } from './InputEmoji';
 
 interface Props {
 	className?: string;
+	reset: () => void;
 }
 
 export const MessageInput = ({ className }: Props) => {
@@ -28,6 +29,7 @@ export const MessageInput = ({ className }: Props) => {
 			onSubmit={(event) => {
 				event.preventDefault();
 				addMessage.mutate(message);
+				setMessage('');
 			}}
 			className={`${className}`}
 		>
