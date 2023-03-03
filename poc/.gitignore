@@ -1,0 +1,8 @@
+*.Identifier
+*.wasm
+*.so
+*.o
+*.log
+*.lock
+dump.rdb
+target

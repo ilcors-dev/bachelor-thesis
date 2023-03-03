@@ -1,0 +1,14 @@
+services:
+  client:
+    image: nginx:alpine
+    ports:
+      - 8090:80
+    volumes:
+      - ./client/dist:/usr/share/nginx/html
+  db:
+    image: mysql:8.0
+    ports:
+      - '3306:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: bachelor
+      MYSQL_DATABASE: wasi-chat
