@@ -177,11 +177,45 @@ fornisce una maggiore sicurezza e limita il rischio di compromissione del sistem
 host a cui vengono garantite tutte le capacità può ancora presentare problemi per la sicurezza.
 
 \section{Stato dell'arte}
-Esistono già vari runtime che permettono di eseguire codice Wasm al di fuori del browser, molti dei quali seguono le
-interfacce definite dallo standard WASI in modo più o meno stretto. Ci sono runtime specializzati in diverse categorie,
-ma anche quelli che mirano ad essere più specifici e a coprire tutto lo standard nella sua completezza. \\
-Ogni nuova interfaccia inserita nello standard, detta WASI API, segue un rigoroso percorso diviso in 6
-fasi\footnote{\url{https://github.com/WebAssembly/meetings/blob/main/process/phases.md}} prima di essere standardizzata:
+Per comprendere meglio la direzione di Wasm e WASI, è essenziale avere presente una panoramica attuale.
+
+\subsection{Chi supporta Wasm?}
+Dal punto di vista di un linguaggio di programmazione, Wasm non è altro che un altro target di compilazione.
+\begin{itemize}
+    \item Per qualsiasi linguaggio compilato, l'ostacolo per l'esecuzione in un contesto WebAssembly è rappresentato
+    dalla possibilità o meno di compilare i programmi nel formato binario Wasm.
+    \item Per qualsiasi linguaggio di scripting, l'ostacolo per l'esecuzione in un contesto WebAssembly è la possibilità
+    di compilare l'interprete in WebAssembly.
+\end{itemize}
+
+Fortunatamente, il supporto a WebAssembly sta crescendo rapidamente. Inizialmente, solo C/C++ e Rust erano in grado di
+generare codice .wasm, ma ora sempre più linguaggi stanno includendo il supporto a Wasm. Di seguito è riportata una
+tabella che riassume il supporto a Wasm  dei linguaggi più popolari\cite{most-popular-technologies-stack-overflow}. È
+divisa in tre categorie: Browser (supporto nativo nei browser), Altro in contesti fuori dai browser e in ambiente WASI.
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|l|l|l|l|}
+    \hline
+        \textbf{Linguaggio} & \textbf{Browser} & \textbf{Altro} & \textbf{WASI} \\ \hline
+        Javascript & Wip & Wip & Wip  \\ \hline
+        Python & Wip & Sì & Sì  \\ \hline
+        Java & Sì & Sì & No  \\ \hline
+        PHP & Sì & Sì & Sì  \\ \hline
+        C\# e .NET & Sì & Sì & Sì  \\ \hline
+        Ruby & Sì & Sì & Sì  \\ \hline
+        Swift & Sì & Sì & Sì  \\ \hline
+        Typescript & No & Wip & No  \\ \hline
+        C/C++ & Sì & Sì & Sì  \\ \hline
+        Rust & Sì & Sì & Sì  \\ \hline
+        Kotlin & Sì & Wip & Wip  \\ \hline
+    \end{tabular}
+    \caption{Supporto a Wasm}
+\end{table}
+
+\subsection{A che punto è lo standard}
+Nel caso di WASI, ogni nuova interfaccia inserita nello standard, nota come WASI API, segue un rigoroso percorso diviso
+in sei fasi\footnote{\url{https://github.com/WebAssembly/meetings/blob/main/process/phases.md}} prima di essere
+standardizzata:
 \begin{itemize}
     \item \textbf{Pre-Proposal}: presentazione dell'idea iniziale e valutazione della sua fattibilità e rilevanza dalla
     comunità degli sviluppatori.
@@ -198,14 +232,22 @@ fasi\footnote{\url{https://github.com/WebAssembly/meetings/blob/main/process/pha
     ufficiale e diventa disponibile per gli sviluppatori.
 \end{itemize}
 
-
-Attualmente, nessuna delle nuove interfacce inserite nello standard WASI API ha superato la fase
-2\footnote{\url{https://github.com/WebAssembly/WASI/blob/main/Proposals.md}}. In ogni caso, è importante notare che ogni
-runtime sviluppa la propria implementazione delle funzionalità necessarie per il suo specifico scopo, anche se non segue
-strettamente lo standard WASI. Ad esempio, l'API per le socket è ancora in fase 1 (Feature Proposal), ma è già
-disponibile in alcuni runtime che ne hanno bisogno. Un esempio di runtime che segue questa filosofia è
-WasmEdge\footnote{\url{https://github.com/WasmEdge/WasmEdge}}, che adotta lo standard WASI per le API già abbastanza
-mature ma prende decisioni diverse per quanto riguarda i moduli ancora in fase di discussione.
+Attualmente, nessuna delle nuove interfacce aggiunte a WebAssembly ha superato la fase 2\footnote{\url{https://github.com/WebAssembly/WASI/blob/main/Proposals.md}} del processo di
+standardizzazione. Questo non è un caso isolato, poiché gli standard si muovono lentamente per garantire la sicurezza e
+la stabilità delle tecnologie. Tuttavia, c'è la necessità di trovare un equilibrio tra la lentezza dei processi di
+standardizzazione e la necessità di mantenere il passo con l'evoluzione della tecnologia. Il rischio che si corre è che
+il tempo di attesa per la standardizzazione di una nuova interfaccia possa essere troppo lungo per alcune realtà che
+hanno bisogno di determinate funzionalità nell'immediato, e ciò può portare a una divisione tra le realtà che seguono lo
+standard e quelle che non lo seguono. Esistono già molti runtime che permettono di eseguire codice Wasm al di fuori del
+browser e molti di questi seguono le interfacce definite dallo standard WASI in modo più o meno stretto. Tuttavia, dove
+lo standard non è ancora pronto, ci sono realtà che prendono la loro strada, come nel caso dell'API per le socket che è
+ancora in fase 1 (Feature Proposal) ma già disponibile in alcuni runtime che ne hanno bisogno. Questo può portare a una
+frammentazione all'interno dello stesso standard e, di conseguenza, alla creazione di una divisione tra realtà che
+dovrebbero essere interoperabili. Un esempio di runtime che segue una filosofia simile è WasmEdge\footnote{\url{https://github.com/WasmEdge/WasmEdge}}, che adotta lo
+standard WASI per le API già mature, ma prende decisioni diverse per quanto riguarda i moduli ancora in fase di
+discussione.
+Questa non vuole essere una critica al processo di standardizzazione, ma piuttosto un'osservazione che mette in luce la 
+difficoltà dello sviluppo degli standard.
 
 \section{WasmEdge}
 In questo documento ci concentreremo sull'utilizzo di WasmEdge come runtime per l'esecuzione di codice WebAssembly sul
