@@ -40,10 +40,13 @@ Come noto, i linguaggi Assembly tradizionali sono strettamente legati all'archit
 Nel corso degli anni, gli sviluppatori hanno cercato di risolvere questo problema attraverso diverse soluzioni. Ad esempio, il linguaggio Java ha introdotto il motto "Write once, run anywhere". Wasm può essere considerato come una soluzione simile, ma con un vantaggio fondamentale: mentre Java richiede agli sviluppatori di scrivere codice nel linguaggio Java o in linguaggi compatibili con la Java Virtual Machine, per poterlo eseguire su qualsiasi piattaforma, Wasm consente di utilizzare qualsiasi linguaggio di programmazione compilabile in formato .wasm e il risultante codice prodotto può essere eseguito su tutti i browser compatibili.
 \\
 Tuttavia, gli sviluppatori non si sono limitati ad utilizzare Wasm solo all'interno dei browser. Anche per lo sviluppo di applicazioni tradizionali, Wasm sta diventando sempre più popolare.
-In questo contesto, WASI svolge un ruolo cruciale. Mentre all'interno del browser Wasm non ha bisogno di comunicare con il sistema operativo, poiché il browser funge da intermediario, al di fuori di esso, la situazione è diversa. Qui, l'applicazione deve comunicare con il filesystem, creare connessioni di rete, eseguire codice in parallelo e così via, e farlo in modo sicuro, isolando l'applicazione dal sistema operativo sottostante e garantendo che non possa interferire con altri processi o con la memoria del sistema. WASI affronta queste sfide fornendo un insieme di interfacce standardizzate, una \textbf{system interface}, tra le applicazioni Wasm e l'ambiente di esecuzione sottostante.
+In questo contesto, WASI svolge un ruolo cruciale. Mentre all'interno del browser Wasm non ha bisogno di comunicare con il sistema operativo, poiché il browser funge da intermediario, al di fuori di esso, la situazione è diversa. Qui, l'applicazione deve comunicare con il filesystem, creare connessioni di rete, eseguire codice in parallelo e così via, e farlo in modo sicuro, isolando l'applicazione dal sistema operativo sottostante e garantendo che non possa interferire con altri processi o con la memoria del sistema.
+\\
+WASI affronta queste sfide fornendo un insieme di interfacce standardizzate, una \textbf{system interface}, tra le applicazioni Wasm e l'ambiente di esecuzione sottostante.
 \clearpage
 \section{Cos'è una System Interface?}
-Normalmente, le applicazioni non si interfacciano direttamente con le risorse del sistema, ma attraverso il sistema operativo, il cui nucleo è il kernel, che media l'accesso alle risorse. Ciò è necessario per evitare accessi indiscriminati, che potrebbero causare instabilità e problemi di sicurezza. Per questo motivo, il sistema operativo organizza la protezione in strati a livelli crescenti di privilegi. Ogni programma viene eseguito in "user mode" e se vuole eseguire operazioni privilegiate, deve chiedere al kernel di farlo attraverso le system call, che eseguono i controlli necessari prima di permettere l'operazione.
+Normalmente, le applicazioni non si interfacciano direttamente con le risorse del sistema, ma attraverso il sistema operativo, il cui nucleo è il kernel, che media l'accesso alle risorse. Ciò è necessario per evitare accessi indiscriminati, che potrebbero causare instabilità e problemi di sicurezza. Per questo motivo, il sistema operativo organizza la protezione in strati a livelli crescenti di privilegi. Ogni programma viene eseguito in "user mode" e se vuole eseguire operazioni privilegiate, deve chiedere al kernel di farlo attraverso le \textbf{system call}, che eseguono i controlli necessari prima di permettere l'operazione.
+\\
 Per semplificare l'accesso alle risorse del sistema, molti linguaggi di programmazione forniscono una libreria standard che definisce un'interfaccia comune, chiamata system interface, indipendente dal sistema operativo sottostante. Ciò significa che gli sviluppatori non devono preoccuparsi dell'implementazione specifica del sistema operativo, poiché possono utilizzare l'interfaccia fornita dal linguaggio di programmazione. Sarà il compilatore a scegliere l'implementazione corretta dell'interfaccia in base al sistema operativo in cui viene eseguita l'applicazione.
 \begin{figure}[h]
     \centering
@@ -63,9 +66,10 @@ Con WebAssembly, invece, è necessario definire un'interfaccia per un sistema op
 \end{figure}
 Questa interfaccia deve essere poi implementata dai runtime capaci di eseguire effettivamente i moduli wasm.
 
+\section{Vantaggi}
 
 \section{Stato dell'arte}
-Esistono già vari runtime che permettono di eseguire codice WebAssembly (wasm) al di fuori del browser, molti dei quali seguono le interfacce definite dallo standard WASI in modo più o meno stretto. Ci sono runtime specializzati in diverse categorie, ma anche quelli che mirano ad essere più specifici e a coprire tutto lo standard nella sua completezza.
+Esistono già vari runtime che permettono di eseguire codice Wasm al di fuori del browser, molti dei quali seguono le interfacce definite dallo standard WASI in modo più o meno stretto. Ci sono runtime specializzati in diverse categorie, ma anche quelli che mirano ad essere più specifici e a coprire tutto lo standard nella sua completezza.
 \\
 Ogni nuova interfaccia inserita nello standard, detta WASI API, segue un rigoroso percorso diviso in 6 fasi\footnote{\url{https://github.com/WebAssembly/meetings/blob/main/process/phases.md}} prima di essere standardizzata:
 \begin{itemize}
@@ -79,7 +83,7 @@ Ogni nuova interfaccia inserita nello standard, detta WASI API, segue un rigoros
 
 
 Attualmente, nessuna delle nuove interfacce inserite nello standard WASI API ha superato la fase 2\footnote{\url{https://github.com/WebAssembly/WASI/blob/main/Proposals.md}}.
-In ogni caso, è importante notare che ogni runtime sviluppa la propria implementazione delle funzionalità necessarie per il suo specifico scopo, anche se non segue strettamente lo standard WASI. Ad esempio, l'API per le socket è ancora in fase 1 (Feature Proposal), ma è già disponibile in alcuni runtime che ne hanno bisogno. Un esempio di runtime che segue questa filosofia è WasmEdge\footnote{\url{https://github.com/WasmEdge/WasmEdge}}, che adotta lo standard WASI per le API già pronte per essere implementate ma prende decisioni diverse per quanto riguarda i moduli ancora in fase di discussione.
+In ogni caso, è importante notare che ogni runtime sviluppa la propria implementazione delle funzionalità necessarie per il suo specifico scopo, anche se non segue strettamente lo standard WASI. Ad esempio, l'API per le socket è ancora in fase 1 (Feature Proposal), ma è già disponibile in alcuni runtime che ne hanno bisogno. Un esempio di runtime che segue questa filosofia è WasmEdge\footnote{\url{https://github.com/WasmEdge/WasmEdge}}, che adotta lo standard WASI per le API già abbastanza mature ma prende decisioni diverse per quanto riguarda i moduli ancora in fase di discussione.
 
 \section{WasmEdge}
 In questo documento ci concentreremo sull'utilizzo di WasmEdge come runtime per l'esecuzione di codice WebAssembly sul cloud. WasmEdge è un runtime sviluppato con l'obiettivo di portare la tecnologia wasm nell'ambito del cloud computing, e quindi di rendere possibile l'esecuzione di applicazioni wasm in ambienti distribuiti e scalabili.
@@ -95,7 +99,7 @@ Per comprendere meglio l'impatto che WASI potrebbe avere nel mondo del cloud com
 
 Significa che Wasm rimpiazzerà completamente docker? No, ma è un'ulteriore tecnologia che si aggiunge a quelle già esistenti, con i propri punti di forza e di debolezza.
 \begin{quote}
-    “So will wasm replace Docker?” No, but imagine a future where Docker runs linux containers, windows containers and wasm containers side by side. Over time wasm might become the most popular container type. Docker will love them all equally, and run it all :)
+    "So will wasm replace Docker?" No, but imagine a future where Docker runs linux containers, windows containers and wasm containers side by side. Over time wasm might become the most popular container type. Docker will love them all equally, and run it all :)
     \\
     \textit{Solomon Hykes - Former Docker Founder}\footnote{\url{https://twitter.com/solomonstre/status/1111113329647325185}}
 \end{quote}
