@@ -232,22 +232,22 @@ standardizzata:
     ufficiale e diventa disponibile per gli sviluppatori.
 \end{itemize}
 
-Attualmente, nessuna delle nuove interfacce aggiunte a WebAssembly ha superato la fase 2\footnote{\url{https://github.com/WebAssembly/WASI/blob/main/Proposals.md}} del processo di
-standardizzazione. Questo non è un caso isolato, poiché gli standard si muovono lentamente per garantire la sicurezza e
-la stabilità delle tecnologie. Tuttavia, c'è la necessità di trovare un equilibrio tra la lentezza dei processi di
-standardizzazione e la necessità di mantenere il passo con l'evoluzione della tecnologia. Il rischio che si corre è che
-il tempo di attesa per la standardizzazione di una nuova interfaccia possa essere troppo lungo per alcune realtà che
-hanno bisogno di determinate funzionalità nell'immediato, e ciò può portare a una divisione tra le realtà che seguono lo
-standard e quelle che non lo seguono. Esistono già molti runtime che permettono di eseguire codice Wasm al di fuori del
-browser e molti di questi seguono le interfacce definite dallo standard WASI in modo più o meno stretto. Tuttavia, dove
-lo standard non è ancora pronto, ci sono realtà che prendono la loro strada, come nel caso dell'API per le socket che è
-ancora in fase 1 (Feature Proposal) ma già disponibile in alcuni runtime che ne hanno bisogno. Questo può portare a una
-frammentazione all'interno dello stesso standard e, di conseguenza, alla creazione di una divisione tra realtà che
-dovrebbero essere interoperabili. Un esempio di runtime che segue una filosofia simile è WasmEdge\footnote{\url{https://github.com/WasmEdge/WasmEdge}}, che adotta lo
-standard WASI per le API già mature, ma prende decisioni diverse per quanto riguarda i moduli ancora in fase di
-discussione.
-Questa non vuole essere una critica al processo di standardizzazione, ma piuttosto un'osservazione che mette in luce la 
-difficoltà dello sviluppo degli standard.
+Attualmente, nessuna delle nuove interfacce aggiunte a WebAssembly ha superato la fase
+2\footnote{\url{https://github.com/WebAssembly/WASI/blob/main/Proposals.md}} del processo di standardizzazione. Non è
+sorprendente, gli standard si muovono lentamente per garantire la sicurezza e la stabilità delle tecnologie. Tuttavia,
+c'è la necessità di trovare un equilibrio tra la lentezza dei processi di standardizzazione e la necessità di mantenere
+il passo con l'evoluzione della tecnologia. Il rischio che si corre è che il tempo di attesa per la standardizzazione di
+una nuova interfaccia possa essere troppo lungo per alcune realtà che hanno bisogno di determinate funzionalità
+nell'immediato, e ciò può portare a una divisione tra le realtà che seguono lo standard e quelle che non lo seguono.
+Esistono già molti runtime che permettono di eseguire codice Wasm al di fuori del browser e molti di questi seguono le
+interfacce definite dallo standard WASI in modo più o meno stretto. Tuttavia, dove lo standard non è ancora pronto, ci
+sono realtà che prendono la loro strada, come nel caso dell'API per le socket che è ancora in fase 1 (Feature Proposal)
+ma già disponibile in alcuni runtime che ne hanno bisogno. Questo può portare a una frammentazione all'interno dello
+stesso standard e, di conseguenza, alla creazione di una divisione tra realtà che dovrebbero essere interoperabili. Un
+esempio di runtime che segue una filosofia simile è WasmEdge\footnote{\url{https://github.com/WasmEdge/WasmEdge}}, che
+adotta lo standard WASI per le API già mature, ma prende decisioni diverse per quanto riguarda i moduli ancora in fase
+di discussione. Questa non vuole essere una critica al processo di standardizzazione, ma piuttosto un'osservazione che
+mette in luce la difficoltà dello sviluppo degli standard.
 
 \section{WasmEdge}
 In questo documento ci concentreremo sull'utilizzo di WasmEdge come runtime per l'esecuzione di codice WebAssembly sul
