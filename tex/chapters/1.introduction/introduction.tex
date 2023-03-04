@@ -22,7 +22,7 @@ come il rendering 3D, il video editing, giochi in-browser e così via. \\\\
 WASI eredita tutte queste caratteristiche da Wasm e le utilizza per lo sviluppo di applicazioni \textbf{al di fuori} dei
 browser. \\\\
 Di seguito andremo ad approfondire WASI ed esporremo come rappresenti una tecnologia estremamente promettente per il
-futuro nell’ambito del cloud computing in particolare, sebbene sia ancora in fase di sviluppo e di adozione.
+futuro nell'ambito del cloud computing in particolare, sebbene sia ancora in fase di sviluppo e di adozione.
 
 \clearpage
 
@@ -105,9 +105,8 @@ implementi, poiché non si conosce a priori il sistema operativo su cui verrà e
 Questa interfaccia deve essere poi implementata dai runtime capaci di eseguire effettivamente i moduli wasm.
 
 \section{Il valore aggiunto}
-Abbiamo presentato Wasm e WASI come tecnologie innovative per lo sviluppo di applicazioni, ma cosa le differenzia da
-altri linguaggi di programmazione e tecniche di sviluppo? Wasm è stato concepito tenendo a mente il web come ambiente,
-ogni runtime browser deve quindi soddisfare i seguenti requisiti:
+Cosa differenzia Wasm e WASI da altri linguaggi di programmazione e tecniche di sviluppo? Wasm è stato concepito tenendo
+a mente le necessità del web, ogni runtime browser deve quindi soddisfare i seguenti requisiti:
 
 \begin{itemize}
     \item \textbf{Sicurezza}: dato che il browser esegue codice proveniente da Internet, è essenziale che il codice
@@ -138,7 +137,7 @@ volta per ogni architettura di destinazione.
 \end{figure}
 Con Wasm e WASI, invece, la situazione è completamente diversa. Una volta compilata l'applicazione, è possibile
 eseguirla su qualsiasi runtime in grado di gestire il codice Wasm. Questo approccio è noto come "Write once, run
-anywhere”, ed è stato introdotto da Java.
+anywhere”.
 \begin{figure}[H]
     \centering
     \captionsetup{justification=centering}
@@ -149,14 +148,16 @@ anywhere”, ed è stato introdotto da Java.
 Si potrebbe obiettare che l'approccio di WebAssembly non rappresenta nulla di innovativo, dato che linguaggi
 interpretati come Java hanno già affrontato questa problematica. Tuttavia, bisogna considerare che WebAssembly non è
 legato a nessun linguaggio di programmazione specifico, ma rappresenta un formato binario generico indipendente. Al
-contrario, il bytecode di Java (metalinguaggio simile al .wat di Wasm) è strettamente legato al linguaggio stesso,
-rappresentando un ostacolo alla portabilità del codice. Questo problema riguarda anche altri linguaggi interpretati,
+contrario, il bytecode di Java (metalinguaggio simile al .wat di Wasm) è strettamente legato al linguaggio stesso e
+rappresenta quindi un ostacolo alla portabilità del codice. Questo problema riguarda anche altri linguaggi interpretati,
 prendiamo come altro esempio Python, che utilizza un approccio simile generando il bytecode prima di poter eseguire il
 codice sorgente nella sua apposita macchina virtuale. Anche in questo caso, il bytecode di Python è strettamente legato
 al linguaggio stesso, impedendo una piena portabilità del codice. \\In secondo luogo Wasm non dipende da una azienda
 privata, è uno standard del World Wide Web Consortium
-(W3C)\footnote{\url{https://www.w3.org/2019/12/pressrelease-wasm-rec.html.en}} e quindi è aperto a tutti. \\Infine, c'è
-da considerare come WASI affronta in maniera diversa dagli altri un'altro aspetto fondamentale: la sicurezza.
+(W3C)\footnote{\url{https://www.w3.org/2019/12/pressrelease-wasm-rec.html.en}} e quindi non segue una sola linea di
+pensiero per la sua sua evoluzione. \\
+Infine, c'è da considerare come WASI affronta in maniera diversa dagli altri un'altro aspetto fondamentale: la
+sicurezza.
 
 \subsection{Sicurezza}
 Abbiamo precedentemente descritto come le applicazioni accedono alle risorse del sistema tramite le system call,
@@ -170,14 +171,14 @@ del sistema. Il codice Wasm, invece, viene eseguito in un ambiente isolato e con
 chiamato "sandbox". In questo ambiente, il codice non ha accesso diretto alle risorse del sistema e non può interagire
 direttamente con il livello sottostante. Al contrario, deve passare attraverso l'host (il browser o il runtime Wasm) che
 contiene le funzioni necessarie per farlo. Questo permette all'host di limitare ciò che un programma può fare a priori.
-In altre parole, un'applicazione non viene eseguita con gli stessi privilegi dell’utente e quindi non può direttamente
+In altre parole, un'applicazione non viene eseguita con gli stessi privilegi dell'utente e quindi non può direttamente
 invocare le system call. Questo modello si basa sul concetto di "capacità" che definisce ciò che un programma Wasm può
 fare e sono definite prima dell'esecuzione dell'applicazione. Questo modello, noto come "capability-based model",
-fornisce una maggiore sicurezza e limita il rischio di compromissione del sistema. Tuttavia, è importante notare che un
-host a cui vengono garantite tutte le capacità può ancora presentare problemi per la sicurezza.
+fornisce una maggiore sicurezza e limita il rischio di compromissione del sistema.
 
 \section{Stato dell'arte}
-Per comprendere meglio la direzione di Wasm e WASI, è essenziale avere presente una panoramica attuale.
+Per poter cogliere appieno la direzione verso cui si stanno muovendo Wasm e WASI, è necessario considerare l'attuale
+panorama tecnologico. 
 
 \subsection{Chi supporta Wasm?}
 Dal punto di vista di un linguaggio di programmazione, Wasm non è altro che un altro target di compilazione.
@@ -189,9 +190,10 @@ Dal punto di vista di un linguaggio di programmazione, Wasm non è altro che un 
 \end{itemize}
 
 Fortunatamente, il supporto a WebAssembly sta crescendo rapidamente. Inizialmente, solo C/C++ e Rust erano in grado di
-generare codice .wasm, ma ora sempre più linguaggi stanno includendo il supporto a Wasm. Di seguito è riportata una
-tabella che riassume il supporto a Wasm  dei linguaggi più popolari\cite{most-popular-technologies-stack-overflow}. È
-divisa in tre categorie: Browser (supporto nativo nei browser), Altro in contesti fuori dai browser e in ambiente WASI.
+generare codice .wasm, ma ora sempre più linguaggi stanno iniziando a supportarlo. Di seguito è riportata una tabella
+che riassume il supporto dei linguaggi più popolari\cite{most-popular-technologies-stack-overflow}. È divisa in tre
+categorie: \textit{Browser} (supporto nativo nei browser), \textit{Altro} in contesti fuori dai browser e in
+\textit{ambiente WASI}.
 \begin{table}[H]
     \centering
     \begin{tabular}{|l|l|l|l|l|}
@@ -207,6 +209,7 @@ divisa in tre categorie: Browser (supporto nativo nei browser), Altro in contest
         Typescript & No & Wip & No  \\ \hline
         C/C++ & Sì & Sì & Sì  \\ \hline
         Rust & Sì & Sì & Sì  \\ \hline
+        Go & Sì & Sì & Sì  \\ \hline
         Kotlin & Sì & Wip & Wip  \\ \hline
     \end{tabular}
     \caption{Supporto a Wasm}
@@ -232,33 +235,63 @@ standardizzata:
     ufficiale e diventa disponibile per gli sviluppatori.
 \end{itemize}
 
-Attualmente, nessuna delle nuove interfacce aggiunte a WebAssembly ha superato la fase
-2\footnote{\url{https://github.com/WebAssembly/WASI/blob/main/Proposals.md}} del processo di standardizzazione. Non è
-sorprendente, gli standard si muovono lentamente per garantire la sicurezza e la stabilità delle tecnologie. Tuttavia,
-c'è la necessità di trovare un equilibrio tra la lentezza dei processi di standardizzazione e la necessità di mantenere
-il passo con l'evoluzione della tecnologia. Il rischio che si corre è che il tempo di attesa per la standardizzazione di
-una nuova interfaccia possa essere troppo lungo per alcune realtà che hanno bisogno di determinate funzionalità
-nell'immediato, e ciò può portare a una divisione tra le realtà che seguono lo standard e quelle che non lo seguono.
-Esistono già molti runtime che permettono di eseguire codice Wasm al di fuori del browser e molti di questi seguono le
-interfacce definite dallo standard WASI in modo più o meno stretto. Tuttavia, dove lo standard non è ancora pronto, ci
-sono realtà che prendono la loro strada, come nel caso dell'API per le socket che è ancora in fase 1 (Feature Proposal)
-ma già disponibile in alcuni runtime che ne hanno bisogno. Questo può portare a una frammentazione all'interno dello
-stesso standard e, di conseguenza, alla creazione di una divisione tra realtà che dovrebbero essere interoperabili. Un
-esempio di runtime che segue una filosofia simile è WasmEdge\footnote{\url{https://github.com/WasmEdge/WasmEdge}}, che
-adotta lo standard WASI per le API già mature, ma prende decisioni diverse per quanto riguarda i moduli ancora in fase
-di discussione. Questa non vuole essere una critica al processo di standardizzazione, ma piuttosto un'osservazione che
-mette in luce la difficoltà dello sviluppo degli standard.
+Attualmente, nessuna delle nuove interfacce aggiunte a WASI ha superato la fase
+2\footnote{\url{https://github.com/WebAssembly/WASI/blob/main/Proposals.md}} del processo di standardizzazione.
+Tuttavia, questo non dovrebbe sorprendere poiché gli standard si muovono lentamente per garantire la sicurezza e la
+stabilità delle tecnologie. Nonostante ciò, c'è la necessità di trovare un equilibrio tra la lentezza dei processi di
+standardizzazione e la necessità di mantenere il passo con l'evoluzione della tecnologia. Il rischio che si corre è che
+il tempo di attesa per la standardizzazione di una nuova interfaccia possa essere troppo lungo per alcune realtà che
+hanno bisogno di determinate funzionalità nell'immediato. Ciò può portare a una divisione tra le realtà che seguono lo
+standard e quelle che non lo seguono. Attualmente, ci sono molti runtime che permettono di eseguire codice Wasm al di
+fuori del browser e molti di questi seguono le interfacce definite dallo standard WASI in modo più o meno stretto.
+Tuttavia, dove lo standard non è ancora pronto, alcune realtà prendono la loro strada, come nel caso dell'API per le
+socket che è ancora in fase 1 (Feature Proposal) ma già disponibile in alcuni runtime che ne hanno bisogno. Questo può
+portare a una frammentazione all'interno dello stesso standard e, di conseguenza, alla creazione di una divisione tra
+realtà che dovrebbero essere interoperabili. Un esempio di runtime che segue questa filosofia è
+WasmEdge\footnote{\url{https://github.com/WasmEdge/WasmEdge}}, che adotta lo standard WASI per le API già mature, ma
+prende decisioni diverse per quanto riguarda i moduli ancora in fase di discussione. È importante sottolineare questo
+aspetto in quanto pone un pericolo per la stabilità futura del progetto. \\
 
-\section{WasmEdge}
-In questo documento ci concentreremo sull'utilizzo di WasmEdge come runtime per l'esecuzione di codice WebAssembly sul
-cloud. WasmEdge è un runtime sviluppato con l'obiettivo di portare la tecnologia wasm nell'ambito del cloud computing, e
-quindi di rendere possibile l'esecuzione di applicazioni wasm in ambienti distribuiti e scalabili. \\
-Inoltre, WasmEdge è l'unico runtime (ad oggi) in grado di essere utilizzato in combinazione con Docker, uno dei più
-diffusi strumenti di containerizzazione. Docker ha recentemente lanciato il supporto ai container
-wasm\cite{docker-wasm-tech-preview}, il che significa che ora è possibile utilizzare i container Docker per eseguire
-applicazioni wasm. Questo è un importante passo avanti nel mondo del cloud computing, perchè, come vedremo, i container
-wasm risultano essere più leggeri e veloci in determinati contesti. \\
-Per comprendere meglio l'impatto che WASI potrebbe avere nel mondo del cloud computing:
+\subsection{Runtime WASI}
+
+\subsubsection{Wasmtime}
+Wasmtime\footnote{\url{https://wasmtime.dev/}} è il runtime ufficiale di WASI ed è un progetto gestito dalla Bytecode
+Alliance\footnote{\url{https://bytecodealliance.org/}}, l'organizzazione leader nello sviluppo di WebAssembly e WASI che
+riunisce le più grandi aziende presenti nel panorama informatico, come Amazon, Google, Microsoft, Cisco, Mozilla per
+citare le più importanti. Grazie a questa posizione privilegiata, Wasmtime segue scrupolosamente lo standard WASI senza
+discostarsi minimamente da esso. Questo runtime supporta diversi linguaggi di programmazione, tra cui Rust, C/C++,
+Python, .NET e Go. Per tradurre il codice .wasm in codice nativo per l'architettura sottostante utilizza Cranelift, un
+compilatore sviluppato dalla stessa Bytecode Alliance.
+
+\subsubsection{Wasmer}
+Wasmer, come Wasmtime, è stato progettato per aderire strettamente allo standard WASI. Una delle caratteristiche più
+interessanti di Wasmer è l'introduzione di un package manager per i moduli WebAssembly, chiamato WAPM (WebAssembly
+Package Manager). WAPM è un registro pubblico di pacchetti WebAssembly, simile ai package manager come npm per
+JavaScript o pip per Python. Consente agli sviluppatori di trovare, installare e distribuire pacchetti WebAssembly in
+modo semplice e veloce. Wasmer, oltre a Cranelift, supporta anche LLVM, uno dei compilatori più popolari e ampiamente
+utilizzati in ambito di sviluppo di software.
+
+\subsubsection{WasmEdge}
+WasmEdge\footnote{\url{https://wasmedge.org/}} è un runtime che pone il focus sul cloud computing e l'edge computing in
+particolare e per questo, come anticipato prima, non segue lo standard WASI in modo rigoroso. \\
+\\
+È interessante notare che tutti e tre i runtime sono Open Source.
+\subsection{Docker+Wasm}
+L'evoluzione del cloud computing ha seguito un percorso di innovazione e miglioramento costante, divisibile in tre
+grandi fasi che hanno introdotto nuove tecnologie e strumenti per l'esecuzione delle applicazioni in ambiente cloud.
+Partiamo dalla fase zero, quella in cui ogni applicazione veniva eseguita su una macchina dedicata, con il proprio
+sistema operativo, risorse hardware e configurazione. Questa soluzione risultava essere molto costosa in termini di
+manutenzione e gestione, oltre che poco flessibile. La prima fase ha visto quindi l'adozione delle Macchine Virtuali
+(VM) come strumento principale per l'esecuzione delle applicazioni. Tuttavia, le VM sono considerate pesanti perché sono
+in tutto e per tutto sistemi operativi virtualizzati su altri sistemi, il che le rende più lente e meno flessibili
+rispetto ad altre soluzioni. Questo ha portato all'evoluzione successiva, caratterizzata dall'avvento dei container, che
+rappresentano un'unità standardizzata di software che racchiude tutto il necessario per eseguire un'applicazione in modo
+isolato e portatile, senza dipendere dal sistema operativo sottostante. I container condividono il Kernel del sistema
+operativo ospitante, rendendoli più veloci e leggeri delle VM e quindi ideali per l'esecuzione di applicazioni in
+ambiente cloud. Infine, quella che potrebbe considerarsi la terza fase dell'evoluzione del cloud computing è stata
+annunciata di recente da Docker, che ha introdotto il supporto ai container wasm\cite{docker-wasm-tech-preview}. I
+container wasm sono ancora più leggeri e portabili dei container tradizionali, offrendo una maggiore efficienza,
+scalabilità e flessibilità nell'esecuzione delle applicazioni in ambiente cloud.
 \begin{quote}
     If WASM+WASI existed in 2008, we wouldn't have needed to create Docker. That's how important it is. Webassembly on
     the server is the future of computing. A standardized system interface was the missing link. Let's hope WASI is up
@@ -276,6 +309,3 @@ esistenti, con i propri punti di forza e di debolezza.
     \textit{Solomon Hykes - Former Docker
     Founder}\footnote{\url{https://twitter.com/solomonstre/status/1111113329647325185}}
 \end{quote}
-
-Nel documento utilizzeremo quindi WasmEdge in combinazione con Docker, analizzando i vantaggi e le limitazioni di questa
-soluzione.
