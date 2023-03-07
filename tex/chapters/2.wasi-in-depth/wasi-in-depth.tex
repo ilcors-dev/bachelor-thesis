@@ -1,6 +1,6 @@
 \chapter{WASI, nel dettaglio}
 \label{chap:wasi-in-depth}
-L'obiettivo principale di WASI è fornire un set di API standard per WebAssembly, indipendenti dal motore di esecuzione
+L'obiettivo principale di WASI è fornire un set di API standard per WebAssembly, indipendenti dall'architettura
 sottostante. Per raggiungere questo obiettivo è stato necessario creare, in prima istanza, un primo modulo su cui basare
 tutti gli altri. Questo modulo è stato chiamato WASI-Core e ha lo scopo di fornire le funzionalità di base per
 l'ambiente di esecuzione, come la gestione dei file, delle reti e di essere generico in modo da poter essere utilizzato
@@ -53,6 +53,7 @@ di WASI ed è perciò di fondamentale importanza per il suo funzionamento.
 \section{La sicurezza con WASI}
 % WASI segue il 'principle of least privilege' e il 'capability-based security model'.
 \subsection{Il problema}
+\label{sec:security-problem}
 Nell'ambito dello sviluppo software, l'utilizzo di librerie esterne è diventato una pratica comune per facilitare la
 creazione di applicazioni complesse. Queste librerie open source, disponibili sotto forma di pacchetti software, sono
 facilmente accessibili tramite l'uso di appositi strumenti chiamati package manager. I package manager sono strumenti di
@@ -158,14 +159,14 @@ ecc.) ha una lista di controllo degli accessi associata che contiene una serie d
 gruppi hanno il permesso di accedere all'oggetto e quali tipi di accesso sono consentiti (come lettura, scrittura,
 esecuzione, ecc.). In un modello di sicurezza basato su capability, ogni processo ha un insieme di capacità specifiche
 che gli consentono di accedere alle risorse del sistema. Una capacità non è altro che una chiave di autorità, associata
-ad un particolare oggetto. Possiamo pensarla come un indice che punta ad una tupla (x, r), dove x è l'oggetto ed r è
-l'insieme dei diritti d'accesso su di esso. Ad esempio, se la tupla (file1, \{leggi, scrivi\}) è associata ad un
-processo tramite una reference mantenuta da questo, tale processo può leggere e scrivere sul file1, ma non può eseguire
-altre azioni su di esso. Quando un processo deve accedere all'oggetto, può farlo senza richiedere l'autorizzazione al
-sistema operativo, in quanto il possesso della capability (la reference) rappresenta già l'autorizzazione per farlo. In
-un modello basato sulle capabilities, il sistema operativo non è responsabile del controllo delle autorizzazioni per i
-processi, ma piuttosto della gestione della lista di capabilities disponibili e della prevenzione di eventuali modifiche
-non autorizzate.
+ad un particolare oggetto. Possiamo pensarla come un indice che punta ad una tupla\cite{wasm-capability-tuple} (x, r),
+dove x è l'oggetto ed r è l'insieme dei diritti d'accesso su di esso. Ad esempio, se la tupla (file1, \{leggi, scrivi\})
+è associata ad un processo tramite una reference mantenuta da questo, tale processo può leggere e scrivere sul file1, ma
+non può eseguire altre azioni su di esso. Quando un processo deve accedere all'oggetto, può farlo senza richiedere
+l'autorizzazione al sistema operativo, in quanto il possesso della capability (la reference) rappresenta già
+l'autorizzazione per farlo. In un modello basato sulle capabilities, il sistema operativo non è responsabile del
+controllo delle autorizzazioni per i processi, ma piuttosto della gestione della lista di capabilities disponibili e
+della prevenzione di eventuali modifiche non autorizzate.
 \subsubsection{Un esempio}
 Supponiamo che un processo abbia in memoria il seguente path:
 \begin{lstlisting}
@@ -219,9 +220,8 @@ Proviamo ad eseguire il programma senza garantire le capability necessarie con W
     error opening input tocopy.txt: failed to find a pre-opened file descriptor through which "tocopy.txt" could be opened
 \end{lstlisting}
 Cosa è andato storto? Analizzando l'errore, si evince che il programma sta tentando di aprire un file chiamato
-'tocopy.txt', ma non dispone del file descriptor necessario per farlo. In altre parole, Wasmtime non ha
-fornito le capability adatte per consentire all'applicazione di eseguire questa operazione.
-\\
+'tocopy.txt', ma non dispone del file descriptor necessario per farlo. In altre parole, Wasmtime non ha fornito le
+capability adatte per consentire all'applicazione di eseguire questa operazione. \\
 Proviamo invece a fornire le giuste capability al programma in questo modo:
 \begin{lstlisting}
     wasmtime --dir=. --dir=/tmp target/wasm32-wasi/debug/file.wasm tocopy.txt /tmp/out.txt
@@ -242,8 +242,8 @@ la directory corrente va pertanto passata attraverso un path relativo. Infatti:
     error opening input tocopy.txt: failed to find a pre-opened file descriptor through which "tocopy.txt" could be opened
 \end{lstlisting}
 
-E i path traversal? Funzionano? Sappiamo che in applicazioni
-tradizionali la sanificazione dell'input è a carico dello sviluppatore, mentre con WASI?
+E i path traversal? Funzionano? Sappiamo che in applicazioni tradizionali la sanificazione dell'input è a carico dello
+sviluppatore, mentre con WASI?
 
 \begin{lstlisting}
     wasmtime --dir=. --dir=/tmp target/wasm32-wasi/debug/file.wasm tocopy.txt /tmp/../etc/passwd
@@ -258,8 +258,258 @@ esplicitamente garantite dalla sandbox!
 In conclusione, possiamo affermare che WASI adotta una metodologia di sicurezza estremamente robusta grazie al modello
 di least authority e al principio di capability. Ciò si traduce in applicazioni molto più sicure di default grazie alla
 riduzione della superficie di attacco disponibile.
-\subsubsection{Il problema delle socket}
-\section{La gestione delle risorse}
 
-\section{Portabilità}
-\section{Nei container}
+\section{La Portabilità}
+Nell'introduzione abbiamo discusso del ruolo di WASI come standard che consente di eseguire il codice WebAssembly su
+sistemi operativi e architetture diverse, in modo efficiente e al di fuori del contesto del browser. Ma quali sono i
+meccanismi sottostanti che consentono a un binario WebAssembly di essere eseguito su così tante piattaforme diverse?
+Innanzitutto, è importante comprendere che i processori possono eseguire solo il linguaggio macchina specifico per la
+propria architettura. In questo contesto, il codice Wasm deve essere tradotto in un linguaggio macchina che la CPU di
+destinazione sia in grado di comprendere ed eseguire. Questo passaggio è eseguito dai compilatori all'interno dei
+runtime.
+
+\subsection{Un accenno ai compilatori}
+Prima di continuare è utile capire come funziona il processo di compilazione in generale. Per comprendere meglio come
+funzionano i compilatori, è importante distinguere le due fasi principali della compilazione: l'analisi e la sintesi. La
+fase di analisi, o front-end, rappresenta la prima fase della compilazione. In questa fase, il compilatore analizza il
+codice sorgente e crea una rappresentazione interna del programma, chiamata "albero sintattico" o "AST" (Abstract Syntax
+Tree). L'albero sintattico rappresenta il codice sorgente in modo strutturato, gerarchico e viene utilizzato per
+generare un linguaggio intermedio chiamato IR (intermediate Representation). L'IR funge da ponte tra la fase di analisi
+e la fase di sintesi, o backend. Contiene informazioni sull'organizzazione del programma, come ad esempio le variabili,
+le funzioni e le istruzioni, ma è ancora abbastanza astratto da poter essere utilizzato per la generazione di codice per
+diverse architetture. Il frontend, inoltre, ottimizza spesso l'IR per migliorare le prestazioni del programma. Una volta
+che l'IR è stato generato, viene passato al backend per la generazione di codice specifico per l'architettura di
+destinazione. Il backend traduce l'IR in istruzioni specifiche per la CPU e genera il codice eseguibile.
+
+\begin{figure}[H]
+    \centering
+    \captionsetup{justification=centering}
+    \includegraphics[width=15cm]{./chapters/2.wasi-in-depth/images/7.how_compilers_work.png}
+    \label{how_compilers_work_simplified}
+    \caption{Una overview sul funzionamento dei compilatori}
+\end{figure}
+
+In ambito Wasm, troviamo diverse strategie di compilazione, tra cui JIT (Just In Time) e AOT (Ahead Of Time). I
+compilatori JIT traducono il codice Wasm in linguaggio macchina durante l'esecuzione del programma, appena prima che il
+codice venga eseguito. Questo significa che il compilatore può ottimizzare il codice in base alle informazioni
+disponibili solo a tempo di esecuzione. L'approccio JIT può portare a prestazioni migliori rispetto all'AOT, in quanto
+il compilatore ha maggiori informazioni a disposizione per l'ottimizzazione del codice. Tuttavia, la traduzione JIT
+richiede una certa quantità di tempo di elaborazione durante l'esecuzione del programma. D'altra parte, i compilatori
+AOT traducono il codice Wasm in linguaggio macchina prima dell'esecuzione del programma, solitamente al momento
+dell'installazione o del caricamento del modulo. Questo significa che il codice viene tradotto una sola volta, rendendo
+l'esecuzione del programma successiva più veloce, poiché il codice già tradotto viene eseguito direttamente. L'approccio
+AOT può essere particolarmente utile per applicazioni in cui la velocità di avvio è un fattore critico, come ad esempio
+negli ambienti cloud. Tuttavia, la traduzione AOT potrebbe non essere in grado di ottimizzare il codice in modo dinamico
+come il compilatore JIT, in quanto non ha informazioni sulle condizioni di esecuzione effettive del programma.
+
+Ci sono vari tipi di compilatori, i più famosi ed usati dai runtime Wasm sono Cranelift e LLVM.
+\subsection{Cranelift}
+Cranelift\footnote{\url{https://github.com/bytecodealliance/wasmtime/blob/main/cranelift/README.md}} è un compilatore
+altamente ottimizzante che è stato progettato specificamente per il bytecode di Wasm. Utilizzando l'IR intermedio CLIF
+(Cranelift IR Format), Cranelift è in grado di rappresentare il codice sorgente Wasm in modo strutturato e applicare una
+vasta gamma di ottimizzazioni durante la fase di compilazione. CLIF è stato progettato per essere facile da analizzare e
+trasformare, consentendo a Cranelift di effettuare una serie di trasformazioni, come la riscrittura di codice per
+migliorare le prestazioni o per renderlo più sicuro. Una volta che il codice Wasm è stato tradotto in CLIF, Cranelift
+applica una serie di fasi di ottimizzazione per migliorare le prestazioni e la sicurezza del codice generato dopo la
+quale, viene convertito in un altro IR intermedio chiamato VCode. Il VCode è un'astrazione del codice macchina ed è
+specificatamente legato ad esso, il che significa che descrive le istruzioni in modo simile a come il processore le
+esegue, ma a un livello più alto di astrazione. Può essere generato per diverse architetture, come x86-64, AArch64
+(ARM64), RISC-V e IBM z/Architecture. Infine, il VCode viene convertito in codice macchina specifico per l'architettura
+di destinazione.
+
+L'utilizzo di due IR intermedie, come CLIF e VCode, è comune nei compilatori moderni. L'utilizzo di un linguaggio
+intermedio astratto come CLIF consente al compilatore di eseguire una vasta gamma di ottimizzazioni sul codice sorgente
+prima della generazione del codice macchina finale. Mentre la conversione in un secondo IR intermedio, come VCode,
+permette al compilatore di generare il codice finale specifico per l'architettura di destinazione, indipendentemente
+dalla complessità dell'IR intermedio utilizzato per l'ottimizzazione del codice. 
+
+\subsection{LLVM}
+LLVM\footnote{\url{https://llvm.org/}} è un framework di compilazione modulare, che fornisce un insieme di strumenti e
+librerie per la compilazione di programmi in diversi linguaggi di programmazione. È molto diffuso ed usato in altri
+ambiti al di fuori di Wasm. Analizza e trasforma il codice sorgente in LLVM IR, un linguaggio intermedio di basso
+livello che rappresenta il codice sorgente in modo strutturato e indipendente dall'architettura.
+
+Dopo la fase di analisi, LLVM applica diverse fasi di ottimizzazione per migliorare le prestazioni e la sicurezza del
+codice generato. Le fasi di ottimizzazione possono essere personalizzate e configurate in modo da ottenere un equilibrio
+tra le prestazioni e la complessità del codice generato. Ad esempio, è possibile configurare LLVM per eseguire solo
+alcune ottimizzazioni di base per ridurre il tempo di compilazione, oppure è possibile configurarlo per applicare un set
+completo di ottimizzazioni per ottenere il massimo delle prestazioni possibili. Una volta completata la fase di
+ottimizzazione, LLVM genera codice macchina per l'architettura di destinazione.
+
+\subsection{La differenza}
+La differenza principale tra Cranelift e LLVM è nel modo in cui gestiscono l'IR intermedio durante il processo di
+compilazione. Cranelift utilizza due IR intermedi, il CLIF, che è stato progettato specificamente per la compilazione di
+WebAssembly e il VCode. Invece, LLVM utilizza il suo proprio IR intermedio, che è stato progettato per essere utilizzato
+con una vasta gamma di linguaggi di programmazione. Inoltre, mentre Cranelift è stato progettato specificamente per
+WebAssembly e supporta solo alcune architetture, LLVM è stato progettato per supportare diverse architetture di
+destinazione, tra cui x86, ARM, MIPS, PowerPC, RISC-V e altre. Ciò significa che LLVM può essere utilizzato per
+compilare codice sorgente in una vasta gamma di linguaggi di programmazione per diverse architetture di destinazione,
+mentre Cranelift è specificamente progettato per compilare codice WebAssembly in alcune architetture specifiche.
+
+\subsection{Linguaggi compilati ed interpretati}
+Parlando dei linguaggi di programmazione, compilati e interpretati, la creazione di moduli .wasm rappresenta una sfida
+diversa per le due realtà. Nel caso dei linguaggi compilati, l'ostacolo principale è rappresentato dal supporto del
+compilatore al formato .wasm. Invece, per i linguaggi interpretati, è l'interprete stesso a dover essere compilato in
+.wasm per eseguire il codice nativo. Tuttavia, è interessante notare che molti interpreti dei linguaggi più comuni sono
+scritti in C/C++, che permette la compilazione in .wasm. Di conseguenza, la maggior parte dei linguaggi interpretati può
+essere usata per produrre moduli .wasm senza problemi.
+
+\begin{figure}[h]
+    \centering
+    \captionsetup{justification=centering}
+    \includegraphics[width=15cm]{./chapters/2.wasi-in-depth/images/9.portability_wasm.png}
+    \label{wasm_wasi_portability}
+    \caption{Linguaggi compilati e interpretati con Wasm}
+\end{figure}
+
+% \section{Il component based model} Al momento della scrittura del documento, diverse interfacce di WASI stanno
+% emergendo. Tutte si basano sul WASI-core definito in precedenza e seguono un modello di sviluppo chiamato component
+% base model. Il component base model
+
+\section{La gestione delle risorse}
+Dopo aver compreso che Wasm è un formato binario di esecuzione compilato da qualsiasi linguaggio di programmazione che
+lo supporti, e che WASI è uno standard che definisce interfacce per consentire ai moduli Wasm di comunicare in modo
+sicuro ed isolato dal sistema sottostante, ci concentriamo ora sul motivo per cui vengono definiti container leggeri e
+considerati la terza ondata del cloud computing.
+
+Il cloud computing ha subito due evoluzioni significative. La prima ha visto il passaggio dalla gestione manuale dei
+server offrenti servizi alla creazione di macchine virtuali, spesso fornite dai provider cloud, che ha permesso di
+ridurre i costi e la manutenzione dei servizi, garantendo l'isolamento delle applicazioni. Tuttavia, presto è diventato
+evidente che le macchine virtuali erano inefficienti, a causa del loro peso: richiedevano l'esecuzione di un intero
+sistema operativo all'interno di un altro sistema operativo, rendendole troppo pesanti per l'istanziazione su richiesta
+dei servizi.
+
+La risposta ai problemi sopra menzionati è stata trovata con l'avvento delle immagini Docker e dei relativi container.
+Le immagini Docker fungono da template per definire i container, che rappresentano le istanze delle immagini. I
+container sono un'unità software relativamente leggera e portatile che esegue le applicazioni in modo isolato, ma
+condividendo il kernel del sistema operativo sottostante. Ciò significa che, a differenza delle macchine virtuali, i
+container non richiedono l'esecuzione di un intero sistema operativo all'interno di un altro sistema operativo,
+rendendoli molto più leggeri e veloci. All'interno di ogni container è presente un insieme di package e dipendenze
+necessarie per eseguire l'applicazione desiderata, il che rende la creazione e l'istanziazione dei container molto più
+veloci rispetto alle VM; funzionalità che ha portato all'ascesa di strumenti di orchestrazione come Kubernetes che si
+occupa di gestire i carichi del sistema e di scalare automaticamente i container per garantire una risposta efficiente
+alle richieste in arrivo. Inoltre, i container offrono un'ulteriore vantaggio in quanto possono essere facilmente
+interconnessi tramite Docker Compose, strumento che permette di organizzare i container in gruppi logici e
+interconnetterli in modo veloce e affidabile, semplificando notevolmente la gestione di applicazioni complesse composte
+da diversi componenti.
+
+Osservando le immagini Docker con un occhio critico, è evidente che esse non sono altro che un insieme di componenti che
+emulano un sistema operativo sul quale eseguire le applicazioni. Praticamente, un'immagine Docker è composta da un
+sistema operativo leggero come Alpine Linux, all'interno del quale viene installata l'applicazione desiderata e le sue
+dipendenze. Quando si avvia un container, viene effettuato il boot di questo sistema operativo, vengono caricate le
+dipendenze e infine si esegue l'applicazione.
+
+Si può quindi evincere che:
+\begin{itemize}
+    \item Un'immagine docker è un intero filesystem
+    \item Ogni immagine ha un sistema operativo: esistono immagini Linux e immagini Windows, non immagini generiche
+    \item L'immagine docker dipende dall'architettura sottostante; un mac con processore ARM può solo eseguire immagini
+    compilate per ARM.
+    \item Le applicazioni devono tener conto del sistema operativo e dell'architettura dell'immagine Docker su cui
+    verranno eseguite
+\end{itemize}
+
+Una tipica immagine Docker è più leggera di un'intera VM e tende anche ad usare meno risorse rispetto ad essa. Tuttavia
+possono arrivare facilmente a dimensioni nell'ordine dei GB.
+
+\begin{figure}[h]
+    \centering
+    \captionsetup{justification=centering}
+    \includegraphics[width=15cm]{./chapters/2.wasi-in-depth/images/8.docker-images-size.png}
+    \label{mysql_docker_image}
+    \caption{Esempio di immagine Docker per mysql}
+\end{figure}
+
+WebAssembly viene definito come un container leggero e può rappresentare la terza ondata del cloud computing perché
+migliora il concetto dei container. Una delle ragioni che lo rende così leggero è il fatto che, a differenza delle
+immagini Docker, un modulo Wasm non richiede di essere inserito all'interno di un mini sistema operativo. Inoltre,
+grazie al suo formato neutrale, con l'ausilio di WASI, può essere eseguito su qualsiasi macchina supportata dal runtime
+utilizzato, che si occupa di gestire l'interazione, l'isolamento e il caricamento di tutte le risorse necessarie per il
+modulo
+
+\subsection{Docker+Wasm}
+Di recente, Docker ha introdotto il supporto ai container Wasm\cite{docker-wasm-tech-preview}, costituendo così un
+notevole passo avanti per l'adozione di Wasm nel mondo cloud. Grazie alla sua diffusione, Docker rende più agevole la
+distribuzione dei container. Tuttavia, i container Wasm su Docker operano in maniera leggermente differente rispetto ai
+container tradizionali.
+
+In genere su Docker, l'avvio e l'esecuzione dei container avviene tramite Containerd, un runtime di container open
+source che funge da interfaccia tra il demone Docker e i container. Quando viene eseguito un comando Docker come "docker
+run", il demone Docker comunica con Containerd per avviare un nuovo container. Containerd si occupa di gestire l'avvio e
+l'esecuzione dei container, compresa la creazione del filesystem, l'assegnazione di namespace di sistema isolati e
+l'aggiunta di eventuali opzioni di rete. Quando il container viene avviato, Containerd lo esegue in una sandbox,
+proteggendo il sistema host da eventuali problemi che potrebbero verificarsi all'interno del container. Per eseguire il
+container viene utilizzato Runc, un runtime di container che implementa lo standard Open Container Initiative (OCI).
+Quando viene eseguito un container tramite Containerd, questo viene eseguito all'interno di un "container shim", un
+piccolo processo che funge da ponte tra Runc e Containerd. Il container shim svolge il compito di trasferire i comandi
+tra Containerd e Runc, gestendo inoltre eventuali segnalazioni tra i due processi. Questa divisione dei ruoli è
+necessaria per garantire che il container venga eseguito in modo isolato dal resto del sistema.
+
+La principale differenza tra un container tradizionale e uno Wasm risiede nella loro architettura. Infatti, mentre un
+container tradizionale necessita di un sistema operativo leggero e dipende dal kernel dell'host per funzionare, uno Wasm
+è basato su un'architettura sandboxed e isolata gestita da un runtime. Ciò significa che i container Wasm non richiedono
+un sistema operativo gestito all'interno del container, ma sono semplicemente composti da un modulo .wasm, il che li
+rende più leggeri. Per eseguire un container Wasm su Docker, è necessario utilizzare una versione modificata del
+containerd-shim chiamata containerd-wasm-shim che è versione modificata appositamente progettata per gestire
+l'architettura sandbox di Wasm e serve da ponte tra Docker e WasmEdge, che è il runtime Wasm utilizzato per eseguire
+l'applicazione al posto di Runc.
+\begin{figure}[h]
+    \centering
+    \captionsetup{justification=centering}
+    \includegraphics[width=8cm]{./chapters/2.wasi-in-depth/images/10.docker_and_wasm.png}
+    \label{docker_and_wasm_wasmedge}
+    \caption{Container tradizionali e container Wasm su Docker}
+\end{figure}
+
+\subsubsection{Wasm al posto di Docker?}
+Viene da chiedersi a questo punto se Wasm prenderà il sopravvento su Docker\cite{why-containers-and-wasm}. In generale possiamo dire di no, entrambi
+hanno i loro punti di forza e debolezza. I container sono utili in quei contesti in cui la portabilità è importante ma
+si vuole anche mantenere un forte controllo sul sistema mentre Wasm permette lo sviluppo di applicazioni sicure di
+default con pochissimo overhead aggiuntivo. Si possono intendere come tecnologie complementari, che in alcuni contesti
+possono coesistere come vedremo infatti nel terzo capitolo del documento quando.
+
+\subsection{Uno use case: i microservizi con Wasm}
+\subsubsection{Il problema}
+Consideriamo ora Wasm in uno scenario reale: quello dei microservizi\cite{a-way-to-rethink-microservices}. Riprendendo
+la spiegazione fornita riguardante la sicurezza in WASI, nella costruzione di un applicazione è ormai la norma
+utilizzare codice scaricato da internet attraverso i package manager. Questo può causare non pochi problemi di
+sicurezza, soprattutto se si tiene conto del fatto che ogni pacchetto richiede a sua volta altre dipendenze per
+funzionare. Prendiamo come esempio NodeJS, dove per creare un'applicazione ad architettura a microservizi, potremmo
+utilizzare il framework ExpressJS per aggiungere le funzionalità necessarie, come il routing, il middleware, la gestione
+dei file, l'integrazione dei database, e così via. Tuttavia, questo significherebbe anche installare tutte le dipendenze
+utilizzate da ExpressJS, che potrebbero essere circa un centinaio. Prima di iniziare a scrivere una sola riga di codice
+avremmo già importato migliaia di righe di codice che potrebbero presentare vulnerabilità. Poi, per eseguire il nostro
+servizio, avremmo bisogno di un server HTTP che andrebbe eseguito per ogni microservizio e che avrebbe bisogno di
+rimanere sempre in ascolto di nuove connessioni. Nel caso di un servizio particolarmente utilizzato, avremmo anche
+bisogno di duplicare le istanze del microservizio per gestire il traffico. Tutto questo comporterebbe un aumento dei
+costi, poiché più pesante è il nostro codice, maggiori le risorse necessarie in termini di storage e utilizzo della CPU.
+Inoltre, la maggior parte del tempo, a meno di un servizio super trafficato, staremo probabilmente pagando per un
+servizio in esecuzione, anche se in idle, replicato. Possiamo notare un certo overhead!
+
+L'adozione di questa metodologia comporta l'acquisizione di un debito tecnico prima ancora di iniziare a scrivere una
+sola riga di codice. Infatti, installando le dipendenze che gestiscono il core della nostra applicazione, come il server
+HTTP, l'implementazione TLS e l'interazione con il sistema sottostante, ci troviamo a dover gestire la sicurezza
+dell'intero sistema ospitante, inclusi i permessi corretti nel sistema. Inoltre, se dovesse emergere una vulnerabilità
+di sicurezza in una di queste dipendenze, saremo costretti a risolverla da soli, poiché un fix potrebbe non essere
+disponibile in tempi brevi. Fortunatamente, nel corso degli anni sono state sviluppate soluzioni come le PaaS o le IaaS,
+in grado di gestire e alleviare gli sviluppatori dal fardello di questa gestione low-level.
+
+Tuttavia, queste soluzioni sono spesso dipendenti dai provider cloud di turno, i quali effettuano scelte in base alle
+proprie necessità. Ad esempio, un servizio PaaS come AWS Elastic Beanstalk può differire dall'omonimo Google App Engine,
+entrambi servono scopi simili ma con modalità differenti.
+
+\subsubsection{La soluzione}
+Wasm offre una soluzione in grado di eliminare la necessità di interagire con il sistema ospitante, il web server HTTP,
+il livello TLS e così via. Queste operazioni sono comuni a tutti i web framework, indipendentemente dal linguaggio di
+programmazione utilizzato, come Javascript, Rust o Java. Grazie a Wasm, possiamo concentrarci sulle funzionalità della
+nostra applicazione, senza dover gestire l'infrastruttura sottostante e la sua comunicazione con essa. Anche se le
+dipendenze introdotte nell'applicazione sono ancora a carico nostro, sarebbe il runtime sottostante a gestire gran parte
+del lavoro in quanto ci garantirebbe l'isolamento e la sicurezza dell'esecuzione grazie al modello basato su capacità.
+Inoltre, la nostra applicazione con Wasm può scalare veramente a zero, poiché un solo server HTTP gestito dal runtime
+sarebbe in grado di redirigere le richieste al servizio adatto con tempi di risposta rapidi in quanto i nostri
+microservizi non sono altro che minuscoli binari .wasm. Combiniamo queste caratteristiche al fatto che Wasm ci permette
+di usare il linguaggio di programmazione che vogliamo e abbiamo una tecnologia estremamente versatile per quanto
+riguarda lo sviluppo in cloud.
+
+Il terzo capitolo metterà un focus proprio su questi concetti appena introdotti per dimostrare l'effettivo valore di
+Wasm in ambiente cloud.
