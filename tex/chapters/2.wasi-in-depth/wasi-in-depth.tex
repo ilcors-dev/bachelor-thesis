@@ -2,12 +2,12 @@
 \label{chap:wasi-in-depth}
 L'obiettivo principale di WASI è fornire un set di API standard per WebAssembly, indipendenti dall'architettura
 sottostante. Per raggiungere questo obiettivo è stato necessario creare, in prima istanza, un primo modulo su cui basare
-tutti gli altri. Questo modulo è stato chiamato WASI-Core e ha lo scopo di fornire le funzionalità di base per
+tutti gli altri. Questo modulo è stato chiamato WASI-core e ha lo scopo di fornire le funzionalità di base per
 l'ambiente di esecuzione, come la gestione dei file, delle reti e di essere generico in modo da poter essere utilizzato
 in qualsiasi ambiente fuori dal browser. Al di fuori del contesto web, WebAssembly ha bisogno di una serie di API per
 interagire con il sistema operativo sottostante, ovvero una libreria di sistema per Wasm. Questa libreria, chiamata
 WASI-libc è in grado di fornire un ponte tra i moduli Wasm e le system call del sistema sottostante. È basata sullo
-standard POSIX ed in particolare su musl-libc\footnote{\url{http://musl.libc.org/}} ed utilizza le funzioni di
+standard POSIX\cite{posix-standard}, in particolare su musl-libc\footnote{\url{http://musl.libc.org/}} ed utilizza le funzioni di
 libpreopen\footnote{\url{https://github.com/musec/libpreopen}}.
 % È basata sullo standard POSIX in particolare su musl-libc\footnote{\url{http://musl.libc.org/}}, un'implementazione
 % dello standard POSIX costruita sulle system call di Linux ed utilizza le funzioni di
@@ -37,14 +37,12 @@ operazioni su stringhe, la gestione dei file, i socket di rete e la gestione dei
 \label{sec:libpreopen}
 Libpreopen è una libreria che fornisce un meccanismo per caricare in anticipo e intercettare le operazioni sui file in
 un sistema operativo. Consente alle applicazioni di aprire i file utilizzando un insieme predefinito di regole e
-percorsi, anziché il percorso effettivo sul file system. Libpreopen intercetta le chiamate di sistema relative ai file,
-come open(), stat() e opendir(), e le traduce in operazioni definite dalle applicazioni. Ciò può essere utile in
-situazioni in cui un'applicazione deve accedere a file che si trovano in una directory o un archivio specifico, o quando
-un'applicazione deve isolare le sue operazioni sui file. Libpreopen consente all'applicazione di specificare un insieme
-di regole che definiscono come i file devono essere accessibili. Ad esempio, un'applicazione potrebbe specificare che
-tutte le operazioni sui file dovrebbero essere eseguite in una directory o file system montato specifico, o che
-determinati file dovrebbero essere in sola lettura o scrittura. Su questi concetti si basa il capability-based security
-di WASI ed è perciò di fondamentale importanza per il suo funzionamento.
+percorsi, anziché il percorso effettivo sul file system. Libpreopen intercetta le chiamate di sistema relative, come
+open(), stat() e opendir(), e le traduce in operazioni definite dalle applicazioni. Consente all'applicazione di
+specificare un insieme di regole che definiscono come i file devono essere accessibili. Ad esempio, un'applicazione
+potrebbe specificare che tutte le operazioni sui file dovrebbero essere eseguite in una directory o file system montato
+specifico, o che determinati file dovrebbero essere in sola lettura o scrittura. Su questi concetti si basa il
+capability-based security di WASI ed è perciò di fondamentale importanza per il suo funzionamento.
 % \subsection{Perché è necessaria una libc?} È il mattoncino base fondamentale per l'interazione con il sistema
 % operativo sottostante, in quanto fornisce le funzioni standard di base necessarie per lo sviluppo delle applicazioni.
 % Senza una libreria standard come la libc, gli sviluppatori dovrebbero scrivere manualmente il codice per queste
@@ -76,8 +74,8 @@ fosse inserito codice malevolo o codice vulnerabile? Purtroppo non è uno scenar
 \begin{quote}
     The average application development project has 49 vulnerabilities and 80 direct dependencies (open source code
     called by a project); \\
-    \textit{Snyk 2019 State of Open Source Security
-    Report}\footnote{\url{https://snyk.io/reports/open-source-security/}}
+    \textit{Snyk 2022 State of Open Source Security
+    Report}\cite{snyk-2022-open-source-security}
 \end{quote}
 Per peggiorare le cose, non tutte queste vulnerabilità vengono risolte, si stima che solo il 59\% dei pacchetti software
 risolva le vulnerabilità trovate.
@@ -89,17 +87,19 @@ registrarsi ad un servizio che notifichi gli sviluppatori delle vulnerabilità t
 soluzione presenta delle limitazioni, in quanto potrebbe non individuare tutte le vulnerabilità presenti nel software.
 Infine, un'altra strategia possibile sarebbe quella di revisionare il codice ogni volta che si fa un update delle
 dipendenze, ma questa soluzione potrebbe funzionare solo per progetti piccoli con poche dipendenze, mentre per progetti
-più grandi e complessi potrebbe risultare impraticabile. Le soluzioni esistenti cercano di individuare le vulnerabilità
+più grandi e complessi potrebbe risultare impraticabile. Queste soluzioni esistenti cercano di individuare le
+vulnerabilità
 del software, ma non offrono una vera e propria prevenzione. La soluzione ideale sarebbe quella di prevenire le
 vulnerabilità alla radice. Per arrivare alla soluzione, dobbiamo tornare un po' indietro nel tempo, in quanto è un
 problema già affrontato in passato, solo con un altro tipo di granularità. \\
 \\
-Il problema di far coesistere due applicazioni in esecuzione senza interferenze reciproche esiste fin dai primi sistemi
-operativi. La soluzione adottata è affidare al sistema operativo il compito di proteggere e controllare l'esecuzione
-delle applicazioni tramite l'utilizzo dei "processi". Quando una nuova applicazione viene avviata, il sistema operativo
-crea un nuovo processo con un'area di memoria dedicata, che non può accedere alle aree riservate degli altri processi.
-Se il processo ha bisogno di comunicare con altri, deve prima richiedere il permesso e farlo tramite le "pipe".
-\begin{figure}[h]
+Partiamo nel capire come due applicazioni non si interferiscono durante la loro esecuzione. È una soluzione che esiste
+fin dai primi sistemi operativi. La soluzione adottata è affidare al sistema operativo il compito di proteggere e
+controllare l'esecuzione delle applicazioni tramite l'utilizzo dei "processi". Quando una nuova applicazione viene
+avviata, il sistema operativo crea un nuovo processo con un'area di memoria dedicata, che non può accedere alle aree
+riservate degli altri processi. Se il processo ha bisogno di comunicare con altri, deve prima richiedere il permesso e
+farlo tramite le "pipe".
+\begin{figure}[H]
     \centering
     \captionsetup{justification=centering}
     \includegraphics[width=10cm]{./chapters/2.wasi-in-depth/images/2.process_isolation.png}
@@ -108,13 +108,14 @@ Se il processo ha bisogno di comunicare con altri, deve prima richiedere il perm
 \end{figure}
 Questo sistema risolve il problema della condivisione della memoria a runtime, ma non garantisce che l'applicazione, ad
 esempio, non acceda al filesystem per effettuare qualche operazione non prevista.\\ 
-Le VM e i container sono stati sviluppati in origine proprio per questo motivo, garantiscono che qualcosa in esecuzione
-in una VM o container non possa accedere al filesystem di altri, ma non nel proprio. Con il modello "sandbox", invece,
-potremmo ulteriormente isolare le applicazioni rimuovendo l'accesso alle API e alle system call del sistema prima che
-l'applicazione venga eseguita. Guardando alle tre soluzioni potremmo arrivare alla conclusione che per garantire la
-sicurezza e l'isolamento di ogni package sia necessario isolarlo all'interno della propria sandbox, con i giusti
-permessi. Ciò però porterebbe presto ad un esaurimento delle risorse del sistema ed introdurrebbe un overhead nella
-comunicazione tra i package dell'applicazione. 
+Le VM e i container sono stati sviluppati in origine proprio per questo motivo, garantiscono che un'applicazione in
+esecuzione in una VM o container non possa accedere al filesystem di altri. E se volessimo anche evitare che i processi
+effettuino determinate chiamate al sistema operativo? Con il modello "sandbox", potremmo ulteriormente isolare le
+applicazioni rimuovendo l'accesso alle API e alle system call del sistema. Guardando alle tre soluzioni potremmo
+arrivare alla conclusione che per garantire la sicurezza e l'isolamento di ogni package sia necessario isolarlo
+all'interno della propria sandbox, con i giusti permessi. Ciò però risulterebbe inefficiente in quanto porterebbe presto
+ad un esaurimento delle risorse del sistema ed introdurrebbe un overhead nella comunicazione tra le componenti
+dell'applicazione.
 \begin{figure}[H]
     \centering
     \captionsetup{justification=centering}
@@ -123,16 +124,17 @@ comunicazione tra i package dell'applicazione.
     \caption{Isolamento dei package in sandbox isolate, evidente inefficienza e overhead}
 \end{figure}
 Come facciamo quindi a garantire l'isolamento di ogni package senza esaurire le risorse del sistema?
-\subsection{La soluzione: nanoprocessi}
-WebAssembly offre un'efficace forma di isolamento che previene al codice non sicuro di fare ciò che vuole, i
-nanoprocessi. I nanoprocessi sono strutture simili ai processi standard di Unix ma che risultano essere più leggeri e di
-dimensioni ridotte. Risiedono all'interno di un ambiente di esecuzione chiamato "sandbox", che rappresenta un processo
-padre isolato dall'esterno. La memoria a cui ogni nanoprocesso ha accesso è uno slice della memoria del processo padre,
-ovvero della sandbox. Per accedere ai dati di un altro modulo, un modulo deve avere l'autorizzazione esplicita per farlo
-e questa autorizzazione viene passata in modo gerarchico, dall'alto verso il basso. In questo modo, la sandbox coordina
-l'accesso ai dati e garantisce che ogni nanoprocesso operi in modo indipendente e sicuro, senza che vadino ad
-interferire con gli altri. L'uso di nanoprocessi consente di ottimizzare le prestazioni dell'applicazione, evitando
-costose chiamate di sistema e semplificando la comunicazione tra i vari moduli Wasm.
+\subsection{La soluzione: i nanoprocessi di WebAssembly}
+WebAssembly offre un'efficace forma di isolamento che previene al codice di operare a proprio piacimento, i
+nanoprocessi\cite{wasm-nano-processes}. I nanoprocessi sono strutture simili ai processi standard di Unix ma che
+risultano essere più leggeri e di dimensioni ridotte. Risiedono all'interno di un ambiente di esecuzione chiamato
+"sandbox", che rappresenta un processo padre isolato dall'esterno. La memoria a cui ogni nanoprocesso ha accesso è uno
+slice della memoria del processo padre, ovvero della sandbox. Per accedere ai dati di un altro modulo deve avere
+l'autorizzazione esplicita per farlo e questa autorizzazione viene passata in modo gerarchico, dall'alto verso il basso
+a partire dalla sandbox. In questo modo, la sandbox coordina l'accesso ai dati e garantisce che ogni nanoprocesso operi
+in modo indipendente e sicuro, senza che vadino ad interferire con gli altri. L'uso di nanoprocessi consente di
+ottimizzare le prestazioni dell'applicazione, evitando costose chiamate di sistema e semplificando la comunicazione tra
+i vari moduli Wasm.
 \begin{figure}[h]
     \centering
     \captionsetup{justification=centering}
@@ -140,51 +142,51 @@ costose chiamate di sistema e semplificando la comunicazione tra i vari moduli W
     \label{nanoprocesses}
     \caption{Nanoprocessi di Wasm}
 \end{figure}
-Si noti che il concetto di nanoprocesso in WebAssembly è basato sui processi Unix, ma implementato attraverso un pattern
-specifico di WebAssembly.\\
+\\
 Tutte le caratteristiche di WebAssembly descritte finora rendono questa tecnologia una soluzione sicura per l'esecuzione
 di codice al di fuori del browser. Per esempio, se del codice malevolo tentasse di accedere a un file su cui la sandbox
-non ha i permessi, il modulo WebAssembly verrebbe interrotto sollevando un'eccezione e il processo finirebbe con un
+non ha i permessi, il modulo WebAssembly verrebbe interrotto sollevando un'eccezione e il processo terminerebbe con un
 errore. Inoltre, anche se la sandbox avesse i permessi per accedere a un determinato file, questi permessi potrebbero
 non essere associati al modulo contenente il codice malevolo. In relazione al codice vulnerabile, sarebbe estremamente
 difficile per un attaccante trovare un modulo che abbia sia l'autorizzazione a utilizzare una determinata system call
-sia l'autorizzazione su un determinato file nel filesystem. \\ Si può notare come questa filosofia di WebAssembly
-aderisca al principio di least authority (POLA) e al capability based model.
+sia l'autorizzazione su un determinato file nel filesystem.
 \subsection{Capability Based Model}
-Il modello basato sulle capacità è un approccio alla sicurezza che si basa sulla concessione di autorizzazioni
-specifiche, chiamate "capacità", ai processi del sistema, concepito a metà degli anni
-sessanta\cite{capability-based-security}. È un'alternativa alle ACL (Access Control List) che sono un metodo di
-controllo degli accessi basato su liste di controllo degli accessi, dove ogni oggetto (come file, cartelle, stampanti,
-ecc.) ha una lista di controllo degli accessi associata che contiene una serie di voci per specificare quali utenti o
-gruppi hanno il permesso di accedere all'oggetto e quali tipi di accesso sono consentiti (come lettura, scrittura,
-esecuzione, ecc.). In un modello di sicurezza basato su capability, ogni processo ha un insieme di capacità specifiche
-che gli consentono di accedere alle risorse del sistema. Una capacità non è altro che una chiave di autorità, associata
-ad un particolare oggetto. Possiamo pensarla come un indice che punta ad una tupla\cite{wasm-capability-tuple} (x, r),
-dove x è l'oggetto ed r è l'insieme dei diritti d'accesso su di esso. Ad esempio, se la tupla (file1, \{leggi, scrivi\})
-è associata ad un processo tramite una reference mantenuta da questo, tale processo può leggere e scrivere sul file1, ma
-non può eseguire altre azioni su di esso. Quando un processo deve accedere all'oggetto, può farlo senza richiedere
-l'autorizzazione al sistema operativo, in quanto il possesso della capability (la reference) rappresenta già
-l'autorizzazione per farlo. In un modello basato sulle capabilities, il sistema operativo non è responsabile del
-controllo delle autorizzazioni per i processi, ma piuttosto della gestione della lista di capabilities disponibili e
-della prevenzione di eventuali modifiche non autorizzate.
+Il modello basato sulle capacità è un approccio alla sicurezza informatica che mira a garantire la protezione dei
+sistemi mediante la concessione di autorizzazioni specifiche, chiamate "capacità", ai processi del sistema. Questo
+modello è stato concepito per la prima volta negli anni '60\cite{capability-based-security} e si basa su tecniche di
+sviluppo che mirano ad assegnare privilegi minimi\cite{Saltzer1975ThePO} ai processi per consentire loro di eseguire
+solo le operazioni necessarie per svolgere il loro compito specifico. È un'alternativa alle ACL (Access Control
+List)\cite{samarati2001access} che sono un metodo di controllo degli accessi basato su liste di controllo degli accessi,
+dove ogni oggetto (come file, cartelle, stampanti, ecc.) ha una lista di controllo degli accessi associata che contiene
+una serie di voci per specificare quali utenti o gruppi hanno il permesso di accedere all'oggetto e quali tipi di
+accesso sono consentiti (come lettura, scrittura, esecuzione, ecc.). In un modello di sicurezza basato su capability,
+ogni processo ha un insieme di capacità specifiche che gli consentono di accedere alle risorse del sistema. Una capacità
+non è altro che una chiave di autorità, associata ad un particolare oggetto. Possiamo pensarla come un indice che punta
+ad una tupla\cite{wasm-capability-tuple} (x, r), dove x è l'oggetto ed r è l'insieme dei diritti d'accesso su di esso.
+Ad esempio, se la tupla (file1, \{leggi, scrivi\}) è associata ad un processo tramite una reference mantenuta da questo,
+tale processo può leggere e scrivere sul file1, ma non può eseguire altre azioni su di esso. Quando un processo deve
+accedere all'oggetto, può farlo senza richiedere l'autorizzazione al sistema operativo, in quanto il possesso della
+capability (la reference) rappresenta già l'autorizzazione per farlo. In un modello basato sulle capabilities, il
+sistema operativo non è responsabile del controllo delle autorizzazioni per i processi, ma piuttosto della gestione
+della lista di capabilities disponibili e della prevenzione di eventuali modifiche non autorizzate.
 \subsubsection{Un esempio}
 Supponiamo che un processo abbia in memoria il seguente path:
 \begin{lstlisting}
     /etc/shadow
 \end{lstlisting}
-Questo rappresenta il nostro oggetto della tupla e supponiamo poi di aver associato all'oggetto anche il permesso di
-lettura: 
+Questo rappresenta il nostro oggetto x della tupla e supponiamo poi di aver associato all'oggetto anche il diritto di
+lettura r: 
 \begin{lstlisting}
     O_RDWR
 \end{lstlisting}
 Così da avere la tupla (/etc/shadow, O\_RDWR). Questa non rappresenta ancora la capability per il processo di accedere
-all'oggetto poiché non si può verificarne l'autorità su di esso. Ipotizziamo ora di avere anche il file descriptor per
+all'oggetto poiché non si può verificare l'autorità su di esso. Ipotizziamo ora di avere anche il file descriptor per
 tale file.
 \begin{lstlisting}
     int fd = open("/etc/shadow", O_RDWR);
 \end{lstlisting}
-La variabile fd contiene l'indice di un descrittore di file presente nella tabella dei descrittori di file del processo,
-che rappresenta la capability dell'oggetto a cui si sta accedendo. La presenza di questo descrittore nella tabella dei
+La variabile fd contiene l'indice di un descrittore di file presente nella tabella dei descrittori di file del processo
+e ciò rappresenta la capability dell'oggetto a cui si sta accedendo. La presenza di questo descrittore nella tabella dei
 descrittori è sufficiente per garantire che il processo abbia accesso legittimo all'oggetto. \\
 
 WASI adotta il modello di Nuxi CloudABI\footnote{\url{https://github.com/NuxiNL/cloudabi}}, che unisce i concetti di
@@ -192,15 +194,16 @@ POSIX e del modello capability based. In questo modello, ogni risorsa del sistem
 identificata da un file descriptor UNIX-like, che rappresenta la capability su un certo oggetto del sistema. Ciò
 significa che un processo non può accedere a tale oggetto se non è in possesso della capability adatta. Per esempio,
 WASI non permette l'accesso alla system call open() che restituisce un file descriptor, ma al contrario, utilizza la
-opennat system call, che richiede un file descriptor precedentemente aperto, ovvero la capability. Essenzialmente
-quindi, un modulo Wasm potrà interagire, ad esempio con il filesystem, solo se la sandbox gli fornirà in precedenza le
-capabilities necessarie su di una certa directory all'avvio. Questi file descriptor saranno aperti in anticipo dalla
-sandbox tramite la \hyperref[sec:libpreopen]{Libpreopen} e passati ai moduli Wasm quando necessario.
+opennat system call, che richiede un file descriptor precedentemente aperto, ovvero la capability associata.
+Essenzialmente quindi, un modulo Wasm potrà interagire, ad esempio con il filesystem, solo se la sandbox gli fornirà in
+precedenza le capabilities necessarie su di una certa directory all'avvio. Questi file descriptor saranno aperti in
+anticipo dalla sandbox tramite la \hyperref[sec:libpreopen]{Libpreopen} e passati ai moduli Wasm quando necessario.
 \subsubsection{Il modello in azione: un esempio}
-Per comprendere meglio questo modello, possiamo analizzare un'applicazione scritta in
-Rust\footnote{\url{https://github.com/ilcors-dev/bachelor-thesis/tree/main/prototypes/1.file}} che si occupa di copiare
-dei file del filesystem. Per eseguire il modulo Wasm generato dalla compilazione del codice sorgente, utilizzeremo
-Wasmtime come runtime.
+Per comprendere meglio questo modello, possiamo analizzare
+un'applicazione\footnote{\url{https://github.com/ilcors-dev/bachelor-thesis/blob/main/prototypes/1.file/src/main.rs}}
+scritta in Rust\footnote{\url{https://www.rust-lang.org/}} che si occupa di copiare dei file del filesystem da una
+posizione ad un'altra. Per eseguire il modulo Wasm generato dalla compilazione del codice sorgente, utilizzeremo il
+runtime Wasmtime.
 \begin{figure}[H]
     \centering
     \captionsetup{justification=centering}
@@ -208,42 +211,42 @@ Wasmtime come runtime.
     \label{wasi_capabilities_example}
     \caption{Il modello capability based in azione}
 \end{figure}
-Compilando il programma tramite cargo, il gestore di pacchetti predefinito di Rust.
+Compiliamo il programma tramite cargo, il gestore di pacchetti predefinito di Rust.
 \begin{lstlisting}
     cargo build --target wasm32-wasi
 \end{lstlisting}
 
-Proviamo ad eseguire il programma senza garantire le capability necessarie con Wasmtime.
+E proviamo ad eseguirlo senza garantire le capability necessarie tramite.
 
 \begin{lstlisting}
     wasmtime target/wasm32-wasi/debug/file.wasm tocopy.txt /tmp/out.txt
     error opening input tocopy.txt: failed to find a pre-opened file descriptor through which "tocopy.txt" could be opened
 \end{lstlisting}
 Cosa è andato storto? Analizzando l'errore, si evince che il programma sta tentando di aprire un file chiamato
-'tocopy.txt', ma non dispone del file descriptor necessario per farlo. In altre parole, Wasmtime non ha fornito le
-capability adatte per consentire all'applicazione di eseguire questa operazione. \\
-Proviamo invece a fornire le giuste capability al programma in questo modo:
+'tocopy.txt', ma non dispone del file descriptor corrispondente necessario. In altre parole, Wasmtime non ha fornito le
+capability adatte per consentire all'applicazione di eseguire la copia del file. \\
+Proviamo invece ora a fornire le giuste capability in questo modo:
 \begin{lstlisting}
     wasmtime --dir=. --dir=/tmp target/wasm32-wasi/debug/file.wasm tocopy.txt /tmp/out.txt
     done!
 \end{lstlisting}
-Analizziamo cosa sta succedendo. L'opzione --dir istruisce Wasmtime di pre-aprire la cartella corrente '.' e la cartella
-di destinazione /tmp rendendole entrambi disponibili al programma. Quando l'applicazione chiama la funzione File::open
+Analizziamo cosa è successo. L'opzione --dir istruisce Wasmtime di pre-aprire la cartella corrente '.' e la cartella
+di destinazione '/tmp' rendendole entrambi disponibili al programma. Quando l'applicazione chiama la funzione File::open
 sta effettivamente chiamando la system call open() passando come parametro il path del file. In questo frangente
 interviene la WASI libc, che in modo trasparente, traduce il path in un path relativo a quello già pre-aperto in
 precedenza da Wasmtime utilizzando la libreria \hyperref[sec:libpreopen]{Libpreopen}. \\In questo modo WASI è in grado
 di adottare il modello capability based e portarlo a livello di system call senza che il programma in sè debba essere
-modificato!
+modificato in qualche modo particolare.
 
-È importante notare che, di default, la sandbox non espone la variabile d'ambiente \$PWD all'applicazione WebAssembly,
+È importante anche notare che, di default, la sandbox non espone la variabile d'ambiente \$PWD all'applicazione WebAssembly,
 la directory corrente va pertanto passata attraverso un path relativo. Infatti:
 \begin{lstlisting}
     wasmtime --dir=\$PWD --dir=/tmp target/wasm32-wasi/debug/file.wasm tocopy.txt /tmp/out.txt
     error opening input tocopy.txt: failed to find a pre-opened file descriptor through which "tocopy.txt" could be opened
 \end{lstlisting}
 
-E i path traversal? Funzionano? Sappiamo che in applicazioni tradizionali la sanificazione dell'input è a carico dello
-sviluppatore, mentre con WASI?
+Parlando di directory corrente con '.', cosa succede con i '..', ovvero i path traversal? Funzionano? Sappiamo che in
+applicazioni tradizionali la sanificazione dell'input è a carico dello sviluppatore, mentre con WASI?
 
 \begin{lstlisting}
     wasmtime --dir=. --dir=/tmp target/wasm32-wasi/debug/file.wasm tocopy.txt /tmp/../etc/passwd
@@ -255,8 +258,7 @@ riguarda gli eventuali permessi necessari per accedere ad /etc/passwd, bensì pa
 per effettuare l'operazione. Le applicazioni WASI non hanno possibilità di accedere a file al di fuori delle directory
 esplicitamente garantite dalla sandbox!
 
-In conclusione, possiamo affermare che WASI adotta una metodologia di sicurezza estremamente robusta grazie al modello
-di least authority e al principio di capability. Ciò si traduce in applicazioni molto più sicure di default grazie alla
+Ciò si traduce in applicazioni molto più sicure di default grazie alla
 riduzione della superficie di attacco disponibile.
 
 \section{La Portabilità}
@@ -269,17 +271,17 @@ destinazione sia in grado di comprendere ed eseguire. Questo passaggio è esegui
 runtime.
 
 \subsection{Un accenno ai compilatori}
-Prima di continuare è utile capire come funziona il processo di compilazione in generale. Per comprendere meglio come
-funzionano i compilatori, è importante distinguere le due fasi principali della compilazione: l'analisi e la sintesi. La
-fase di analisi, o front-end, rappresenta la prima fase della compilazione. In questa fase, il compilatore analizza il
-codice sorgente e crea una rappresentazione interna del programma, chiamata "albero sintattico" o "AST" (Abstract Syntax
-Tree). L'albero sintattico rappresenta il codice sorgente in modo strutturato, gerarchico e viene utilizzato per
-generare un linguaggio intermedio chiamato IR (intermediate Representation). L'IR funge da ponte tra la fase di analisi
-e la fase di sintesi, o backend. Contiene informazioni sull'organizzazione del programma, come ad esempio le variabili,
-le funzioni e le istruzioni, ma è ancora abbastanza astratto da poter essere utilizzato per la generazione di codice per
-diverse architetture. Il frontend, inoltre, ottimizza spesso l'IR per migliorare le prestazioni del programma. Una volta
-che l'IR è stato generato, viene passato al backend per la generazione di codice specifico per l'architettura di
-destinazione. Il backend traduce l'IR in istruzioni specifiche per la CPU e genera il codice eseguibile.
+Prima di continuare è utile capire come funziona il processo di compilazione in generale. È importante distinguere le
+due fasi principali della compilazione: l'analisi e la sintesi. La fase di analisi, o front-end, rappresenta la prima
+fase della compilazione. In questa fase, il compilatore analizza il codice sorgente e crea una rappresentazione interna
+del programma, chiamata "albero sintattico" o "AST" (Abstract Syntax Tree). L'albero sintattico rappresenta il codice
+sorgente in modo strutturato, gerarchico e viene utilizzato per generare un linguaggio intermedio chiamato IR
+(intermediate Representation). L'IR funge da ponte tra la fase di analisi e la fase di sintesi, o backend. Contiene
+informazioni sull'organizzazione del programma, come ad esempio le variabili, le funzioni e le istruzioni, ma è ancora
+abbastanza astratto da poter essere utilizzato per la generazione di codice per diverse architetture. Il frontend, dopo
+aver ottimizzato l'IR per migliorarne le prestazioni lo passa al backend per la generazione di codice specifico per
+l'architettura di destinazione. Il backend traduce l'IR in istruzioni specifiche per la CPU e genera il codice
+eseguibile.
 
 \begin{figure}[H]
     \centering
@@ -310,18 +312,17 @@ altamente ottimizzante che è stato progettato specificamente per il bytecode di
 vasta gamma di ottimizzazioni durante la fase di compilazione. CLIF è stato progettato per essere facile da analizzare e
 trasformare, consentendo a Cranelift di effettuare una serie di trasformazioni, come la riscrittura di codice per
 migliorare le prestazioni o per renderlo più sicuro. Una volta che il codice Wasm è stato tradotto in CLIF, Cranelift
-applica una serie di fasi di ottimizzazione per migliorare le prestazioni e la sicurezza del codice generato dopo la
-quale, viene convertito in un altro IR intermedio chiamato VCode. Il VCode è un'astrazione del codice macchina ed è
-specificatamente legato ad esso, il che significa che descrive le istruzioni in modo simile a come il processore le
-esegue, ma a un livello più alto di astrazione. Può essere generato per diverse architetture, come x86-64, AArch64
-(ARM64), RISC-V e IBM z/Architecture. Infine, il VCode viene convertito in codice macchina specifico per l'architettura
-di destinazione.
+applica una serie di fasi di ottimizzazione dopo le quali, viene convertito in un altro IR intermedio chiamato VCode. Il
+VCode è un'astrazione del codice macchina ed è specificatamente legato ad esso, il che significa che descrive le
+istruzioni in modo simile a come il processore le esegue, ma a un livello più alto di astrazione. Può essere generato
+per diverse architetture, come x86-64, AArch64 (ARM64), RISC-V e IBM z/Architecture. Infine, il VCode viene convertito
+in codice macchina specifico per l'architettura di destinazione.
 
-L'utilizzo di due IR intermedie, come CLIF e VCode, è comune nei compilatori moderni. L'utilizzo di un linguaggio
-intermedio astratto come CLIF consente al compilatore di eseguire una vasta gamma di ottimizzazioni sul codice sorgente
-prima della generazione del codice macchina finale. Mentre la conversione in un secondo IR intermedio, come VCode,
-permette al compilatore di generare il codice finale specifico per l'architettura di destinazione, indipendentemente
-dalla complessità dell'IR intermedio utilizzato per l'ottimizzazione del codice. 
+L'utilizzo di due IR intermedie, come CLIF e VCode, consente al compilatore, tramite la prima traduzione, di eseguire
+una vasta gamma di ottimizzazioni sul codice sorgente prima della generazione del codice macchina finale. Mentre la
+conversione in un secondo IR intermedio, come VCode, permette al compilatore di generare il codice finale specifico per
+l'architettura di destinazione, indipendentemente dalla complessità dell'IR intermedio utilizzato per l'ottimizzazione
+del codice. 
 
 \subsection{LLVM}
 LLVM\footnote{\url{https://llvm.org/}} è un framework di compilazione modulare, che fornisce un insieme di strumenti e
@@ -346,6 +347,14 @@ destinazione, tra cui x86, ARM, MIPS, PowerPC, RISC-V e altre. Ciò significa ch
 compilare codice sorgente in una vasta gamma di linguaggi di programmazione per diverse architetture di destinazione,
 mentre Cranelift è specificamente progettato per compilare codice WebAssembly in alcune architetture specifiche.
 
+\begin{figure}[H]
+    \centering
+    \captionsetup{justification=centering}
+    \includegraphics[width=15cm]{./chapters/2.wasi-in-depth/images/11.runtime_to_machine.png}
+    \label{runtime_to_machine_code}
+    \caption{Dal runtime al linguaggio macchina}
+\end{figure}
+
 \subsection{Linguaggi compilati ed interpretati}
 Parlando dei linguaggi di programmazione, compilati e interpretati, la creazione di moduli .wasm rappresenta una sfida
 diversa per le due realtà. Nel caso dei linguaggi compilati, l'ostacolo principale è rappresentato dal supporto del
@@ -354,7 +363,7 @@ compilatore al formato .wasm. Invece, per i linguaggi interpretati, è l'interpr
 scritti in C/C++, che permette la compilazione in .wasm. Di conseguenza, la maggior parte dei linguaggi interpretati può
 essere usata per produrre moduli .wasm senza problemi.
 
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
     \captionsetup{justification=centering}
     \includegraphics[width=15cm]{./chapters/2.wasi-in-depth/images/9.portability_wasm.png}
@@ -375,42 +384,37 @@ considerati la terza ondata del cloud computing.
 Il cloud computing ha subito due evoluzioni significative. La prima ha visto il passaggio dalla gestione manuale dei
 server offrenti servizi alla creazione di macchine virtuali, spesso fornite dai provider cloud, che ha permesso di
 ridurre i costi e la manutenzione dei servizi, garantendo l'isolamento delle applicazioni. Tuttavia, presto è diventato
-evidente che le macchine virtuali erano inefficienti, a causa del loro peso: richiedevano l'esecuzione di un intero
-sistema operativo all'interno di un altro sistema operativo, rendendole troppo pesanti per l'istanziazione su richiesta
-dei servizi.
+evidente che le macchine virtuali sono inefficienti, a causa del loro peso: richiedono l'esecuzione di un intero sistema
+operativo all'interno di un altro sistema operativo.
 
-La risposta ai problemi sopra menzionati è stata trovata con l'avvento delle immagini Docker e dei relativi container.
-Le immagini Docker fungono da template per definire i container, che rappresentano le istanze delle immagini. I
-container sono un'unità software relativamente leggera e portatile che esegue le applicazioni in modo isolato, ma
-condividendo il kernel del sistema operativo sottostante. Ciò significa che, a differenza delle macchine virtuali, i
-container non richiedono l'esecuzione di un intero sistema operativo all'interno di un altro sistema operativo,
-rendendoli molto più leggeri e veloci. All'interno di ogni container è presente un insieme di package e dipendenze
-necessarie per eseguire l'applicazione desiderata, il che rende la creazione e l'istanziazione dei container molto più
-veloci rispetto alle VM; funzionalità che ha portato all'ascesa di strumenti di orchestrazione come Kubernetes che si
-occupa di gestire i carichi del sistema e di scalare automaticamente i container per garantire una risposta efficiente
-alle richieste in arrivo. Inoltre, i container offrono un'ulteriore vantaggio in quanto possono essere facilmente
-interconnessi tramite Docker Compose, strumento che permette di organizzare i container in gruppi logici e
-interconnetterli in modo veloce e affidabile, semplificando notevolmente la gestione di applicazioni complesse composte
-da diversi componenti.
+Poi c'è stato l'avvento delle immagini Docker e dei relativi container. I container sono un'unità software relativamente
+leggera e portatile che esegue le applicazioni in modo isolato, ma condividendo il kernel del sistema operativo
+sottostante. Ciò significa che, a differenza delle macchine virtuali, i container non richiedono l'esecuzione di un
+intero sistema operativo all'interno di un altro sistema operativo, rendendoli molto più leggeri e veloci. All'interno
+di ogni container è presente un insieme di package e dipendenze necessarie per eseguire l'applicazione desiderata, il
+che rende la creazione e l'istanziazione dei container molto più veloci rispetto alle VM; funzionalità che ha portato
+all'ascesa di strumenti di orchestrazione come Kubernetes che si occupa di gestire i carichi del sistema e di scalare
+automaticamente le applicazioni per garantire una risposta efficiente alle richieste in arrivo. Inoltre, i container
+offrono un'ulteriore vantaggio in quanto possono essere facilmente interconnessi tramite Docker Compose, strumento che
+permette di organizzare i container in gruppi logici e interconnetterli in modo veloce e affidabile, semplificando
+notevolmente la gestione di applicazioni complesse composte da diversi componenti.
 
-Osservando le immagini Docker con un occhio critico, è evidente che esse non sono altro che un insieme di componenti che
-emulano un sistema operativo sul quale eseguire le applicazioni. Praticamente, un'immagine Docker è composta da un
-sistema operativo leggero come Alpine Linux, all'interno del quale viene installata l'applicazione desiderata e le sue
-dipendenze. Quando si avvia un container, viene effettuato il boot di questo sistema operativo, vengono caricate le
-dipendenze e infine si esegue l'applicazione.
+Per fare un esempio concreto, un'immagine Docker è composta da un sistema operativo leggero come Alpine Linux,
+all'interno del quale viene installata l'applicazione desiderata e le sue dipendenze. Quando si avvia un container,
+viene effettuato il boot di questo sistema operativo, vengono caricate le dipendenze e infine si esegue l'applicazione.
 
 Si può quindi evincere che:
 \begin{itemize}
     \item Un'immagine docker è un intero filesystem
     \item Ogni immagine ha un sistema operativo: esistono immagini Linux e immagini Windows, non immagini generiche
-    \item L'immagine docker dipende dall'architettura sottostante; un mac con processore ARM può solo eseguire immagini
-    compilate per ARM.
+    \item L'immagine docker dipende dall'architettura sottostante; un Mac con processore ARM può solo eseguire immagini
+    compilate per ARM
     \item Le applicazioni devono tener conto del sistema operativo e dell'architettura dell'immagine Docker su cui
     verranno eseguite
 \end{itemize}
 
 Una tipica immagine Docker è più leggera di un'intera VM e tende anche ad usare meno risorse rispetto ad essa. Tuttavia
-possono arrivare facilmente a dimensioni nell'ordine dei GB.
+possono arrivare facilmente a dimensioni nell'ordine delle centinaia di MB e dei GB.
 
 \begin{figure}[h]
     \centering
@@ -420,12 +424,12 @@ possono arrivare facilmente a dimensioni nell'ordine dei GB.
     \caption{Esempio di immagine Docker per mysql}
 \end{figure}
 
-WebAssembly viene definito come un container leggero e può rappresentare la terza ondata del cloud computing perché
-migliora il concetto dei container. Una delle ragioni che lo rende così leggero è il fatto che, a differenza delle
-immagini Docker, un modulo Wasm non richiede di essere inserito all'interno di un mini sistema operativo. Inoltre,
+WebAssembly invece viene definito come un container leggero e può rappresentare la terza ondata del cloud computing
+perché migliora il concetto dei container. Una delle ragioni che lo rende così leggero è il fatto che, a differenza
+delle immagini Docker, un modulo Wasm non richiede di essere inserito all'interno di un mini sistema operativo. Inoltre,
 grazie al suo formato neutrale, con l'ausilio di WASI, può essere eseguito su qualsiasi macchina supportata dal runtime
 utilizzato, che si occupa di gestire l'interazione, l'isolamento e il caricamento di tutte le risorse necessarie per il
-modulo
+modulo.
 
 \subsection{Docker+Wasm}
 Di recente, Docker ha introdotto il supporto ai container Wasm\cite{docker-wasm-tech-preview}, costituendo così un
@@ -433,7 +437,7 @@ notevole passo avanti per l'adozione di Wasm nel mondo cloud. Grazie alla sua di
 distribuzione dei container. Tuttavia, i container Wasm su Docker operano in maniera leggermente differente rispetto ai
 container tradizionali.
 
-In genere su Docker, l'avvio e l'esecuzione dei container avviene tramite Containerd, un runtime di container open
+In genere, su Docker, l'avvio e l'esecuzione dei container avviene tramite Containerd, un runtime di container open
 source che funge da interfaccia tra il demone Docker e i container. Quando viene eseguito un comando Docker come "docker
 run", il demone Docker comunica con Containerd per avviare un nuovo container. Containerd si occupa di gestire l'avvio e
 l'esecuzione dei container, compresa la creazione del filesystem, l'assegnazione di namespace di sistema isolati e
@@ -450,9 +454,9 @@ container tradizionale necessita di un sistema operativo leggero e dipende dal k
 è basato su un'architettura sandboxed e isolata gestita da un runtime. Ciò significa che i container Wasm non richiedono
 un sistema operativo gestito all'interno del container, ma sono semplicemente composti da un modulo .wasm, il che li
 rende più leggeri. Per eseguire un container Wasm su Docker, è necessario utilizzare una versione modificata del
-containerd-shim chiamata containerd-wasm-shim che è versione modificata appositamente progettata per gestire
-l'architettura sandbox di Wasm e serve da ponte tra Docker e WasmEdge, che è il runtime Wasm utilizzato per eseguire
-l'applicazione al posto di Runc.
+containerd-shim chiamata containerd-wasm-shim che è versione appositamente progettata per gestire l'architettura sandbox
+di Wasm e serve da ponte tra Docker e WasmEdge, che è il runtime Wasm utilizzato per eseguire l'applicazione al posto di
+Runc.
 \begin{figure}[h]
     \centering
     \captionsetup{justification=centering}
@@ -466,7 +470,7 @@ Viene da chiedersi a questo punto se Wasm prenderà il sopravvento su Docker\cit
 hanno i loro punti di forza e debolezza. I container sono utili in quei contesti in cui la portabilità è importante ma
 si vuole anche mantenere un forte controllo sul sistema mentre Wasm permette lo sviluppo di applicazioni sicure di
 default con pochissimo overhead aggiuntivo. Si possono intendere come tecnologie complementari, che in alcuni contesti
-possono coesistere come vedremo infatti nel terzo capitolo del documento quando.
+possono coesistere come vedremo infatti nel terzo capitolo del documento.
 
 \subsection{Uno use case: i microservizi con Wasm}
 \subsubsection{Il problema}
@@ -478,13 +482,13 @@ funzionare. Prendiamo come esempio NodeJS, dove per creare un'applicazione ad ar
 utilizzare il framework ExpressJS per aggiungere le funzionalità necessarie, come il routing, il middleware, la gestione
 dei file, l'integrazione dei database, e così via. Tuttavia, questo significherebbe anche installare tutte le dipendenze
 utilizzate da ExpressJS, che potrebbero essere circa un centinaio. Prima di iniziare a scrivere una sola riga di codice
-avremmo già importato migliaia di righe di codice che potrebbero presentare vulnerabilità. Poi, per eseguire il nostro
-servizio, avremmo bisogno di un server HTTP che andrebbe eseguito per ogni microservizio e che avrebbe bisogno di
+avremmo già importato migliaia di altre righe di codice che potrebbero presentare vulnerabilità. Poi, per eseguire il
+nostro servizio, avremmo bisogno di un server HTTP che andrebbe eseguito per ogni microservizio e che avrebbe bisogno di
 rimanere sempre in ascolto di nuove connessioni. Nel caso di un servizio particolarmente utilizzato, avremmo anche
 bisogno di duplicare le istanze del microservizio per gestire il traffico. Tutto questo comporterebbe un aumento dei
 costi, poiché più pesante è il nostro codice, maggiori le risorse necessarie in termini di storage e utilizzo della CPU.
 Inoltre, la maggior parte del tempo, a meno di un servizio super trafficato, staremo probabilmente pagando per un
-servizio in esecuzione, anche se in idle, replicato. Possiamo notare un certo overhead!
+servizio in esecuzione, anche se in idle, replicato.
 
 L'adozione di questa metodologia comporta l'acquisizione di un debito tecnico prima ancora di iniziare a scrivere una
 sola riga di codice. Infatti, installando le dipendenze che gestiscono il core della nostra applicazione, come il server
@@ -501,15 +505,14 @@ entrambi servono scopi simili ma con modalità differenti.
 \subsubsection{La soluzione}
 Wasm offre una soluzione in grado di eliminare la necessità di interagire con il sistema ospitante, il web server HTTP,
 il livello TLS e così via. Queste operazioni sono comuni a tutti i web framework, indipendentemente dal linguaggio di
-programmazione utilizzato, come Javascript, Rust o Java. Grazie a Wasm, possiamo concentrarci sulle funzionalità della
-nostra applicazione, senza dover gestire l'infrastruttura sottostante e la sua comunicazione con essa. Anche se le
-dipendenze introdotte nell'applicazione sono ancora a carico nostro, sarebbe il runtime sottostante a gestire gran parte
-del lavoro in quanto ci garantirebbe l'isolamento e la sicurezza dell'esecuzione grazie al modello basato su capacità.
-Inoltre, la nostra applicazione con Wasm può scalare veramente a zero, poiché un solo server HTTP gestito dal runtime
-sarebbe in grado di redirigere le richieste al servizio adatto con tempi di risposta rapidi in quanto i nostri
-microservizi non sono altro che minuscoli binari .wasm. Combiniamo queste caratteristiche al fatto che Wasm ci permette
-di usare il linguaggio di programmazione che vogliamo e abbiamo una tecnologia estremamente versatile per quanto
-riguarda lo sviluppo in cloud.
+programmazione utilizzato, che sia questo Javascript, Rust o Java. Grazie a Wasm, possiamo concentrarci sulle
+funzionalità della nostra applicazione, senza dover gestire l'infrastruttura sottostante e la sua comunicazione con
+essa. Anche se le dipendenze introdotte nell'applicazione sono ancora a carico nostro, sarebbe il runtime sottostante a
+gestire gran parte del lavoro in quanto ci garantirebbe l'isolamento e la sicurezza dell'esecuzione. Inoltre, la nostra
+applicazione con Wasm può scalare veramente a zero, poiché un solo server HTTP gestito dal runtime sarebbe in grado di
+redirigere le richieste al servizio adatto con tempi di risposta rapidi in quanto i nostri microservizi non sono altro
+che minuscoli binari .wasm. Combiniamo queste caratteristiche al fatto che Wasm ci permette di usare il linguaggio di
+programmazione che vogliamo e abbiamo una tecnologia estremamente versatile per quanto riguarda lo sviluppo in cloud.
 
 Il terzo capitolo metterà un focus proprio su questi concetti appena introdotti per dimostrare l'effettivo valore di
 Wasm in ambiente cloud.
