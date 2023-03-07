@@ -4,6 +4,7 @@ import { useQuery } from 'react-query';
 import { Message } from './Message';
 import { MessageInput } from './MessageInput';
 import { MessageLoading } from './MessageLoading';
+import { WebSocketDemo } from './WebSocketDemo';
 
 export const Chat = () => {
 	const messagesContainer = useRef(null);
@@ -49,6 +50,7 @@ export const Chat = () => {
 				</ul>
 			</div>
 			<MessageInput className="mt-4 w-full" />
+			<WebSocketDemo />
 		</div>
 	);
 };
