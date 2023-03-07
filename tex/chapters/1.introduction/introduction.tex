@@ -276,7 +276,7 @@ WasmEdge\footnote{\url{https://wasmedge.org/}} è un runtime che pone il focus s
 particolare e per questo, come anticipato prima, non segue lo standard WASI in modo rigoroso. \\
 \\
 È interessante notare che tutti e tre i runtime sono Open Source.
-\subsection{Docker+Wasm}
+\subsection{I container Wasm}
 L'evoluzione del cloud computing ha seguito un percorso di innovazione e miglioramento costante, divisibile in tre
 grandi fasi che hanno introdotto nuove tecnologie e strumenti per l'esecuzione delle applicazioni in ambiente cloud.
 Partiamo dalla fase zero, quella in cui ogni applicazione veniva eseguita su una macchina dedicata, con il proprio
@@ -292,6 +292,15 @@ ambiente cloud. Infine, quella che potrebbe considerarsi la terza fase dell'evol
 annunciata di recente da Docker, che ha introdotto il supporto ai container wasm\cite{docker-wasm-tech-preview}. I
 container wasm sono ancora più leggeri e portabili dei container tradizionali, offrendo una maggiore efficienza,
 scalabilità e flessibilità nell'esecuzione delle applicazioni in ambiente cloud.
+
+\begin{figure}[H]
+    \centering
+    \captionsetup{justification=centering}
+    \includegraphics[width=15cm]{./chapters/1.introduction/images/7.wasi_cloud_lightweight.png}
+    \label{wasi_wasi_cloud}
+    \caption{Evoluzione del cloud computing}
+\end{figure}
+
 \begin{quote}
     If WASM+WASI existed in 2008, we wouldn't have needed to create Docker. That's how important it is. Webassembly on
     the server is the future of computing. A standardized system interface was the missing link. Let's hope WASI is up
