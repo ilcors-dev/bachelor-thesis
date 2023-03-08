@@ -1,5 +1,7 @@
 **/**/target/*
 !**/**/target/wasm32-wasi
+poc/web/dist
+poc/web/node_modules
 
 ## Core latex/pdflatex auxiliary files:
 *.aux
