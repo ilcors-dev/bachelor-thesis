@@ -1,0 +1,25 @@
+spin_version = "1"
+authors = ["ilcors-dev <corsetti.luca28@gmail.com>"]
+description = "A simple chat application written in Rust using WASI"
+name = "wasi-chat-poc"
+trigger = { type = "http", base = "/" }
+version = "0.1.0"
+
+[variables]
+db_user = { default = "bachelor" }
+db_pswd = { default = "bachelor" }
+db_host = { default = "127.0.0.1" }
+db_name = { default = "wasi-chat" }
+
+[[component]]
+id = "message-api"
+source = "api/message/target/wasm32-wasi/release/message_api.wasm"
+allowed_http_hosts = []
+[component.trigger]
+route = "/api/messages/..."
+[component.build]
+command = "cargo build --target wasm32-wasi --release"
+workdir = "api/message"
+
+[component.config]
+db_url = "mysql://{{db_user}}:{{db_pswd}}@{{db_host}}/{{db_name}}"
