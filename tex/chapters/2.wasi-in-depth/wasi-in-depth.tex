@@ -1,4 +1,4 @@
-\chapter{WASI, nel dettaglio}
+\chapter{WASI}
 \label{chap:wasi-in-depth}
 L'obiettivo principale di WASI è fornire un set di API standard per WebAssembly, indipendenti dall'architettura
 sottostante. Per raggiungere questo obiettivo è stato necessario creare, in prima istanza, un primo modulo su cui basare
@@ -48,226 +48,6 @@ capability-based security di WASI ed è perciò di fondamentale importanza per i
 % Senza una libreria standard come la libc, gli sviluppatori dovrebbero scrivere manualmente il codice per queste
 % funzioni di basso livello, il che sarebbe molto laborioso e inefficiente. Si noti che la libc non è un requisito
 % esclusivo di WASI, è la base su cui poggiano tutti i sistemi informatici moderni!
-\section{La sicurezza con WASI}
-% WASI segue il 'principle of least privilege' e il 'capability-based security model'.
-\subsection{Il problema}
-\label{sec:security-problem}
-Nell'ambito dello sviluppo software, l'utilizzo di librerie esterne è diventato una pratica comune per facilitare la
-creazione di applicazioni complesse. Queste librerie open source, disponibili sotto forma di pacchetti software, sono
-facilmente accessibili tramite l'uso di appositi strumenti chiamati package manager. I package manager sono strumenti di
-gestione del software che consentono di gestire, salvare e distribuire le librerie di codice necessarie alla creazione
-di un'applicazione. Inoltre, consentono di installare automaticamente tutte le dipendenze richieste per far funzionare
-un software, semplificando notevolmente il processo di integrazione di nuove funzionalità all'interno di
-un'applicazione. Con l'utilizzo di un package manager, gli sviluppatori possono concentrarsi maggiormente sullo sviluppo
-di funzionalità specifiche, piuttosto che sulla gestione delle dipendenze.
-\begin{figure}[h]
-    \centering
-    \captionsetup{justification=centering}
-    \includegraphics[width=8cm]{./chapters/2.wasi-in-depth/images/1.malicious_or_vuln_code.png}
-    \label{app_package}
-    \caption{Come sono composte le applicazioni moderne}
-\end{figure}
-In questo modo, è possibile ridurre il lavoro necessario per la creazione di applicazioni complesse, migliorare
-l'efficienza del processo di sviluppo e aumentare la qualità del software prodotto. D'altra parte, questo modello di
-sviluppo espone le applicazioni ad una grossa problematica, cosa succederebbe se in uno di questi pacchetti software ci
-fosse inserito codice malevolo o codice vulnerabile? Purtroppo non è uno scenario remoto:
-\begin{quote}
-    The average application development project has 49 vulnerabilities and 80 direct dependencies (open source code
-    called by a project); \\
-    \textit{Snyk 2022 State of Open Source Security Report}\cite{snyk-2022-open-source-security}
-\end{quote}
-Per peggiorare le cose, non tutte queste vulnerabilità vengono risolte, si stima che solo il 59\% dei pacchetti software
-risolva le vulnerabilità trovate e in media ci impieghi circa 110
-giorni\footnote{\url{https://snyk.io/reports/open-source-security\#Open-source-vulnerabilities-are-becoming-harder-to-fix}}.
-\begin{figure}[h]
-    \centering
-    \captionsetup{justification=centering}
-    \includegraphics[width=12cm]{./chapters/2.wasi-in-depth/images/12.time_to_fix_os_sec.png}
-    \label{time_to_fix_security}
-    \caption{Tempo necessario per risolvere le vulnerabilità, un confronto tra open source e codice proprietario}
-\end{figure}
-\subsection{Una possibile soluzione}
-Esistono diverse strategie che gli sviluppatori possono adottare per proteggere il loro software e gli utenti finali. Ad
-esempio, si potrebbe utilizzare uno scanner per controllare le applicazioni e le dipendenze, tuttavia questa soluzione
-non è sempre efficace, poiché gli scanner sono facilmente aggirabili. Un'altra opzione potrebbe essere quella di
-registrarsi ad un servizio che notifichi gli sviluppatori delle vulnerabilità trovate nel codice, ma anche questa
-soluzione presenta delle limitazioni, in quanto potrebbe non individuare tutte le vulnerabilità presenti nel software.
-Infine, un'altra strategia possibile sarebbe quella di revisionare il codice ogni volta che si fa un update delle
-dipendenze, ma questa soluzione potrebbe funzionare solo per progetti piccoli con poche dipendenze, mentre per progetti
-più grandi e complessi potrebbe risultare impraticabile. Queste soluzioni esistenti cercano di individuare le
-vulnerabilità del software, ma non offrono una vera e propria prevenzione. La soluzione ideale sarebbe quella di
-prevenire tali vulnerabilità alla radice, ma è più facile a dirsi che a farsi. E se avessimo un modo per limitare le
-applicazioni e i loro package in modo che siano confinati dentro ad una sorta di contenitore chiuso che non permetta di
-disturbare le altre applicazioni del sistema e quindi di causare danni? Possiamo farlo attraverso molti modi, molti dei
-quali sono già stati affrontati in passato. \\
-Partiamo nel capire come due applicazioni non si interferiscono durante la loro esecuzione. È una soluzione che esiste
-fin dai primi sistemi operativi. La soluzione adottata è affidare al sistema operativo il compito di proteggere e
-controllare l'esecuzione delle applicazioni tramite l'utilizzo dei "processi". Quando una nuova applicazione viene
-avviata, il sistema operativo crea un nuovo processo con un'area di memoria dedicata, che non può accedere alle aree
-riservate degli altri. Se ha bisogno di comunicare con altri, deve prima richiedere il permesso e farlo tramite le pipe.
-\begin{figure}[H]
-    \centering
-    \captionsetup{justification=centering}
-    \includegraphics[width=10cm]{./chapters/2.wasi-in-depth/images/2.process_isolation.png}
-    \label{process_isolation}
-    \caption{Isolamento dei processi nei sistemi operativi}
-\end{figure}
-Questo sistema risolve il problema della condivisione della memoria a runtime ed evita che un eventuale applicazione
-manipoli la memoria di altri, ma non garantisce, ad esempio, che non possa accedere al filesystem per effettuare qualche
-operazione non prevista.\\ 
-Le VM e i container sono stati sviluppati in origine proprio per questo motivo, garantiscono che un'applicazione in
-esecuzione in una VM o container non possa accedere al filesystem di altri degli altri in esecuzione sulla stessa
-macchina. Questo però non risolve del tutto un'altro problema, l'applicazione in un container o in una VM è comunque in
-grado di accedere al proprio sistema e causare danni al suo interno. Se volessimo proprio vietare anche determinate
-azioni all'interno di uno stesso sistema? Con il modello sandbox, potremmo farlo isolando le applicazioni, rimuovendo
-l'accesso alle API e alle system call su questo. Potremmo perciò arrivare alla conclusione che per garantire la
-sicurezza e l'isolamento di ogni package sia necessario isolarlo all'interno della propria sandbox. Ciò però
-risulterebbe inefficiente in quanto porterebbe presto ad un esaurimento delle risorse del sistema ed introdurrebbe un
-overhead nella comunicazione tra le componenti dell'applicazione.
-\begin{figure}[H]
-    \centering
-    \captionsetup{justification=centering}
-    \includegraphics[width=10cm]{./chapters/2.wasi-in-depth/images/3.package_isolation_processes.png}
-    \label{process_package_in_sandbox}
-    \caption{Isolamento dei package in sandbox isolate, evidente inefficienza e overhead}
-\end{figure}
-Come facciamo quindi a garantire l'isolamento di ogni package senza esaurire le risorse del sistema?
-\subsection{La soluzione: i nanoprocessi di WebAssembly}
-WebAssembly offre un'efficace forma di isolamento che previene al codice di operare a proprio piacimento, i
-nanoprocessi\cite{wasm-nano-processes}. I nanoprocessi sono strutture simili ai processi standard di Unix ma che
-risultano essere più leggeri e di dimensioni ridotte. Risiedono all'interno di un ambiente di esecuzione chiamato
-sandbox, che rappresenta un processo contenitore isolato dall'esterno. La memoria a cui ogni nanoprocesso ha accesso è
-uno slice della memoria della  sandbox e per accedere ai dati di un altro modulo deve avere l'autorizzazione esplicita
-per farlo. Questa autorizzazione viene passata in modo gerarchico, dall'alto verso il basso a partire dalla sandbox che
-a sua volta ha ricevuto i permessi all'avvio. In questo modo, la sandbox coordina l'accesso ai dati e garantisce che
-ogni nanoprocesso operi in modo indipendente e sicuro, senza che eventuali package vulnerabili possano causare danni
-all'esterno. L'uso di nanoprocessi consente di ottimizzare le prestazioni dell'applicazione, evitando costose chiamate
-di sistema e semplificando la comunicazione tra i vari moduli Wasm.
-\begin{figure}[h]
-    \centering
-    \captionsetup{justification=centering}
-    \includegraphics[width=10cm]{./chapters/2.wasi-in-depth/images/4.nanoprocesses.png}
-    \label{nanoprocesses}
-    \caption{Nanoprocessi di Wasm}
-\end{figure}
-\\
-Tutte le caratteristiche di WebAssembly descritte finora rendono questa tecnologia una soluzione sicura per l'esecuzione
-di codice al di fuori del browser. Per esempio, se del codice malevolo tentasse di accedere a un file su cui la sandbox
-non ha i permessi, il modulo WebAssembly verrebbe interrotto sollevando un'eccezione e il processo terminerebbe con un
-errore. Inoltre, anche se la sandbox avesse i permessi per accedere a un determinato file, questi permessi potrebbero
-non essere associati al modulo contenente il codice malevolo e anche in questo caso il processo verrebbe interrotto. In
-relazione al codice vulnerabile, sarebbe estremamente difficile per un attaccante trovare un modulo che abbia sia
-l'autorizzazione a utilizzare una determinata system call sia l'autorizzazione su un determinato file nel filesystem.
-\subsection{Capability Based Model}
-Il modello basato sulle capacità è un approccio alla sicurezza informatica che mira a garantire la protezione dei
-sistemi mediante la concessione di autorizzazioni specifiche, chiamate "capacità", ai processi del sistema. Questo
-modello è stato concepito per la prima volta negli anni sessanta\cite{capability-based-security} e si basa su tecniche
-di sviluppo che mirano ad assegnare privilegi minimi\cite{Saltzer1975ThePO} ai processi per consentire loro di eseguire
-solo le operazioni necessarie per svolgere il loro compito specifico. È un'alternativa alle ACL (Access Control
-List)\cite{samarati2001access} che sono un metodo di controllo degli accessi basato su liste di controllo degli accessi,
-dove ogni oggetto (come file, cartelle, stampanti, ecc.) ha una lista di controllo degli accessi associata che contiene
-una serie di voci per specificare quali utenti o gruppi hanno il permesso di accedere all'oggetto e quali tipi di
-accesso sono consentiti (come lettura, scrittura, esecuzione, ecc.). In un modello di sicurezza basato su capability,
-ogni processo ha un insieme di capacità specifiche che gli consentono di accedere alle risorse del sistema. Una capacità
-non è altro che una chiave di autorità, associata ad un particolare oggetto. Possiamo pensarla come un indice che punta
-ad una tupla\cite{wasm-capability-tuple} (x, r), dove x è l'oggetto ed r è l'insieme dei diritti d'accesso su di esso.
-Ad esempio, se la tupla (file1, \{leggi, scrivi\}) è associata ad un processo tramite una reference mantenuta da questo,
-tale processo può leggere e scrivere sul file1, ma non può eseguire altre azioni su di esso. Quando un processo deve
-accedere all'oggetto, può farlo senza richiedere l'autorizzazione al sistema operativo, in quanto il possesso della
-capability (la reference) rappresenta già l'autorizzazione per farlo. In un modello basato sulle capabilities, il
-sistema operativo non è responsabile del controllo delle autorizzazioni per i processi, ma piuttosto della gestione
-della lista di capabilities disponibili e della prevenzione di eventuali modifiche non autorizzate.
-\subsubsection{Un esempio}
-Supponiamo che un processo abbia in memoria il seguente path:
-\begin{lstlisting}
-    /etc/shadow
-\end{lstlisting}
-Questo rappresenta il nostro oggetto x della tupla e supponiamo poi di aver associato all'oggetto anche il diritto di
-lettura r: 
-\begin{lstlisting}
-    O_RDWR
-\end{lstlisting}
-Così da avere la tupla (/etc/shadow, O\_RDWR). Questa non rappresenta ancora la capability per il processo di accedere
-all'oggetto poiché non si può verificare l'autorità su di esso. Ipotizziamo ora di avere anche il file descriptor per
-tale file.
-\begin{lstlisting}
-    int fd = open("/etc/shadow", O_RDWR);
-\end{lstlisting}
-La variabile fd contiene l'indice di un descrittore di file presente nella tabella dei descrittori di file del processo
-e ciò rappresenta la capability dell'oggetto a cui si sta accedendo. La presenza di questo descrittore nella tabella dei
-descrittori è sufficiente per garantire che il processo abbia accesso legittimo all'oggetto. \\
-
-WASI adotta il modello di Nuxi CloudABI\footnote{\url{https://github.com/NuxiNL/cloudabi}}, che unisce i concetti di
-POSIX e del modello capability based. In questo modello, ogni risorsa del sistema, come file, directory e socket, è
-identificata da un file descriptor UNIX-like, che rappresenta la capability su un certo oggetto del sistema. Ciò
-significa che un processo non può accedere a tale oggetto se non è in possesso della capability adatta. Per esempio,
-WASI non permette l'accesso alla system call open() che restituisce un file descriptor, ma al contrario, utilizza la
-opennat system call, che richiede un file descriptor precedentemente aperto, ovvero la capability associata.
-Essenzialmente quindi, un modulo Wasm potrà interagire, ad esempio con il filesystem, solo se la sandbox gli fornirà in
-precedenza le capabilities necessarie su di una certa directory all'avvio. Questi file descriptor saranno aperti in
-anticipo dalla sandbox tramite la \hyperref[sec:libpreopen]{Libpreopen} e passati ai moduli Wasm quando necessario.
-\subsubsection{Il modello in azione: un esempio}
-Per comprendere meglio questo modello, possiamo analizzare
-un'applicazione\footnote{\url{https://github.com/ilcors-dev/bachelor-thesis/blob/main/prototypes/1.file/src/main.rs}}
-scritta in Rust\footnote{\url{https://www.rust-lang.org/}} che si occupa di copiare dei file del filesystem da una
-posizione ad un'altra. Per eseguire il modulo Wasm generato dalla compilazione del codice sorgente, utilizzeremo il
-runtime Wasmtime.
-\begin{figure}[H]
-    \centering
-    \captionsetup{justification=centering}
-    \includegraphics[width=15cm]{./chapters/2.wasi-in-depth/images/5.wasi_capability_example.png}
-    \label{wasi_capabilities_example}
-    \caption{Il modello capability based in azione}
-\end{figure}
-Compiliamo il programma tramite cargo, il gestore di pacchetti predefinito di Rust.
-\begin{lstlisting}
-    cargo build --target wasm32-wasi
-\end{lstlisting}
-
-E proviamo ad eseguirlo senza garantire le capability necessarie tramite.
-
-\begin{lstlisting}
-    wasmtime target/wasm32-wasi/debug/file.wasm tocopy.txt /tmp/out.txt
-    error opening input tocopy.txt: failed to find a pre-opened file descriptor through which "tocopy.txt" could be opened
-\end{lstlisting}
-Cosa è andato storto? Analizzando l'errore, si evince che il programma sta tentando di aprire un file chiamato
-'tocopy.txt', ma non dispone del file descriptor corrispondente necessario. In altre parole, Wasmtime non ha fornito le
-capability adatte per consentire all'applicazione di eseguire la copia del file. \\
-Proviamo invece ora a fornire le giuste capability in questo modo:
-\begin{lstlisting}
-    wasmtime --dir=. --dir=/tmp target/wasm32-wasi/debug/file.wasm tocopy.txt /tmp/out.txt
-    done!
-\end{lstlisting}
-Analizziamo cosa è successo. L'opzione --dir istruisce Wasmtime di pre-aprire la cartella corrente '.' e la cartella di
-destinazione '/tmp' rendendole entrambi disponibili al programma. Quando l'applicazione chiama la funzione File::open
-sta effettivamente chiamando la system call open() passando come parametro il path del file. In questo frangente
-interviene la WASI libc, che in modo trasparente, traduce il path in un path relativo a quello già pre-aperto in
-precedenza da Wasmtime utilizzando la libreria \hyperref[sec:libpreopen]{Libpreopen}. \\In questo modo WASI è in grado
-di adottare il modello capability based e portarlo a livello di system call senza che il programma in sè debba essere
-modificato in qualche modo particolare.
-
-È importante anche notare che, di default, la sandbox non espone la variabile d'ambiente \$PWD all'applicazione
-WebAssembly, la directory corrente va pertanto passata attraverso un path relativo. Infatti:
-\begin{lstlisting}
-    wasmtime --dir=\$PWD --dir=/tmp target/wasm32-wasi/debug/file.wasm tocopy.txt /tmp/out.txt
-    error opening input tocopy.txt: failed to find a pre-opened file descriptor through which "tocopy.txt" could be opened
-\end{lstlisting}
-
-Parlando di directory corrente con '.', cosa succede con i '..', ovvero i path traversal? Funzionano? Sappiamo che in
-applicazioni tradizionali la sanificazione dell'input è a carico dello sviluppatore, mentre con WASI?
-
-\begin{lstlisting}
-    wasmtime --dir=. --dir=/tmp target/wasm32-wasi/debug/file.wasm tocopy.txt /tmp/../etc/passwd
-    error opening output /tmp/../etc/passwd: failed to find a pre-opened file descriptor through which "/tmp/../etc/passwd" could be opened
-\end{lstlisting}
-
-Come possiamo notare l'applicazione viene bloccata prima di raggiungere il sistema operativo, infatti l'errore non
-riguarda gli eventuali permessi necessari per accedere ad /etc/passwd, bensì parla della mancanza di capacità necessaria
-per effettuare l'operazione. Le applicazioni WASI non hanno possibilità di accedere a file al di fuori delle directory
-esplicitamente garantite dalla sandbox!
-
-Ciò si traduce in applicazioni molto più sicure di default grazie alla riduzione della superficie di attacco
-disponibile.
 
 \section{La Portabilità}
 Nell'introduzione abbiamo discusso del ruolo di WASI come standard che consente di eseguire il codice WebAssembly su
@@ -523,3 +303,228 @@ programmazione che vogliamo e abbiamo una tecnologia estremamente versatile per 
 
 Il terzo capitolo metterà un focus proprio su questi concetti appena introdotti per dimostrare l'effettivo valore di
 Wasm in ambiente cloud.
+
+\section{La sicurezza con WASI}
+% WASI segue il 'principle of least privilege' e il 'capability-based security model'.
+\subsection{Il problema}
+\label{sec:security-problem}
+Nell'ambito dello sviluppo software, l'utilizzo di librerie esterne è diventato una pratica comune per facilitare la
+creazione di applicazioni complesse. Queste librerie open source, disponibili sotto forma di pacchetti software, sono
+facilmente accessibili tramite l'uso di appositi strumenti chiamati package manager. I package manager sono strumenti di
+gestione del software che consentono di gestire, salvare e distribuire le librerie di codice necessarie alla creazione
+di un'applicazione. Inoltre, consentono di installare automaticamente tutte le dipendenze richieste per far funzionare
+un software, semplificando notevolmente il processo di integrazione di nuove funzionalità all'interno di
+un'applicazione. Con l'utilizzo di un package manager, gli sviluppatori possono concentrarsi maggiormente sullo sviluppo
+di funzionalità specifiche, piuttosto che sulla gestione delle dipendenze.
+\begin{figure}[h]
+    \centering
+    \captionsetup{justification=centering}
+    \includegraphics[width=8cm]{./chapters/2.wasi-in-depth/images/1.malicious_or_vuln_code.png}
+    \label{app_package}
+    \caption{Come sono composte le applicazioni moderne}
+\end{figure}
+In questo modo, è possibile ridurre il lavoro necessario per la creazione di applicazioni complesse, migliorare
+l'efficienza del processo di sviluppo e aumentare la qualità del software prodotto. D'altra parte, questo modello di
+sviluppo espone le applicazioni ad una grossa problematica, cosa succederebbe se in uno di questi pacchetti software ci
+fosse inserito codice malevolo o codice vulnerabile? Purtroppo non è uno scenario remoto:
+\begin{quote}
+    The average application development project has 49 vulnerabilities and 80 direct dependencies (open source code
+    called by a project); \\
+    \textit{Snyk 2022 State of Open Source Security Report}\cite{snyk-2022-open-source-security}
+\end{quote}
+Per peggiorare le cose, non tutte queste vulnerabilità vengono risolte, si stima che solo il 59\% dei pacchetti software
+risolva le vulnerabilità trovate e in media ci impieghi circa 110
+giorni\footnote{\url{https://snyk.io/reports/open-source-security\#Open-source-vulnerabilities-are-becoming-harder-to-fix}}.
+\begin{figure}[h]
+    \centering
+    \captionsetup{justification=centering}
+    \includegraphics[width=12cm]{./chapters/2.wasi-in-depth/images/12.time_to_fix_os_sec.png}
+    \label{time_to_fix_security}
+    \caption{Tempo necessario per risolvere le vulnerabilità, un confronto tra open source e codice proprietario}
+\end{figure}
+\subsection{Una possibile soluzione}
+Esistono diverse strategie che gli sviluppatori possono adottare per proteggere il loro software e gli utenti finali. Ad
+esempio, si potrebbe utilizzare uno scanner per controllare le applicazioni e le dipendenze, tuttavia questa soluzione
+non è sempre efficace, poiché gli scanner sono facilmente aggirabili. Un'altra opzione potrebbe essere quella di
+registrarsi ad un servizio che notifichi gli sviluppatori delle vulnerabilità trovate nel codice, ma anche questa
+soluzione presenta delle limitazioni, in quanto potrebbe non individuare tutte le vulnerabilità presenti nel software.
+Infine, un'altra strategia possibile sarebbe quella di revisionare il codice ogni volta che si fa un update delle
+dipendenze, ma questa soluzione potrebbe funzionare solo per progetti piccoli con poche dipendenze, mentre per progetti
+più grandi e complessi potrebbe risultare impraticabile. Queste soluzioni esistenti cercano di individuare le
+vulnerabilità del software, ma non offrono una vera e propria prevenzione. La soluzione ideale sarebbe quella di
+prevenire tali vulnerabilità alla radice, ma è più facile a dirsi che a farsi. E se avessimo un modo per limitare le
+applicazioni e i loro package in modo che siano confinati dentro ad una sorta di contenitore chiuso che non permetta di
+disturbare le altre applicazioni del sistema e quindi di causare danni? Possiamo farlo attraverso molti modi, molti dei
+quali sono già stati affrontati in passato. \\
+Partiamo nel capire come due applicazioni non si interferiscono durante la loro esecuzione. È una soluzione che esiste
+fin dai primi sistemi operativi. La soluzione adottata è affidare al sistema operativo il compito di proteggere e
+controllare l'esecuzione delle applicazioni tramite l'utilizzo dei "processi". Quando una nuova applicazione viene
+avviata, il sistema operativo crea un nuovo processo con un'area di memoria dedicata, che non può accedere alle aree
+riservate degli altri. Se ha bisogno di comunicare con altri, deve prima richiedere il permesso e farlo tramite le pipe.
+\begin{figure}[H]
+    \centering
+    \captionsetup{justification=centering}
+    \includegraphics[width=10cm]{./chapters/2.wasi-in-depth/images/2.process_isolation.png}
+    \label{process_isolation}
+    \caption{Isolamento dei processi nei sistemi operativi}
+\end{figure}
+Questo sistema risolve il problema della condivisione della memoria a runtime ed evita che un eventuale applicazione
+manipoli la memoria di altri, ma non garantisce, ad esempio, che non possa accedere al filesystem per effettuare qualche
+operazione non prevista.\\ 
+Le VM e i container sono stati sviluppati in origine proprio per questo motivo, garantiscono che un'applicazione in
+esecuzione in una VM o container non possa accedere al filesystem di altri degli altri in esecuzione sulla stessa
+macchina. Questo però non risolve del tutto un'altro problema, l'applicazione in un container o in una VM è comunque in
+grado di accedere al proprio sistema e causare danni al suo interno. Se volessimo proprio vietare anche determinate
+azioni all'interno di uno stesso sistema? Con il modello sandbox, potremmo farlo isolando le applicazioni, rimuovendo
+l'accesso alle API e alle system call su questo. Potremmo perciò arrivare alla conclusione che per garantire la
+sicurezza e l'isolamento di ogni package sia necessario isolarlo all'interno della propria sandbox. Ciò però
+risulterebbe inefficiente in quanto porterebbe presto ad un esaurimento delle risorse del sistema ed introdurrebbe un
+overhead nella comunicazione tra le componenti dell'applicazione.
+\begin{figure}[H]
+    \centering
+    \captionsetup{justification=centering}
+    \includegraphics[width=10cm]{./chapters/2.wasi-in-depth/images/3.package_isolation_processes.png}
+    \label{process_package_in_sandbox}
+    \caption{Isolamento dei package in sandbox isolate, evidente inefficienza e overhead}
+\end{figure}
+Come facciamo quindi a garantire l'isolamento di ogni package senza esaurire le risorse del sistema?
+\subsection{La soluzione: i nanoprocessi di WebAssembly}
+WebAssembly offre un'efficace forma di isolamento che previene al codice di operare a proprio piacimento, i
+nanoprocessi\cite{wasm-nano-processes}. I nanoprocessi sono strutture simili ai processi standard di Unix ma che
+risultano essere più leggeri e di dimensioni ridotte. Risiedono all'interno di un ambiente di esecuzione chiamato
+sandbox, che rappresenta un processo contenitore isolato dall'esterno. La memoria a cui ogni nanoprocesso ha accesso è
+uno slice della memoria della  sandbox e per accedere ai dati di un altro modulo deve avere l'autorizzazione esplicita
+per farlo. Questa autorizzazione viene passata in modo gerarchico, dall'alto verso il basso a partire dalla sandbox che
+a sua volta ha ricevuto i permessi all'avvio. In questo modo, la sandbox coordina l'accesso ai dati e garantisce che
+ogni nanoprocesso operi in modo indipendente e sicuro, senza che eventuali package vulnerabili possano causare danni
+all'esterno. L'uso di nanoprocessi consente di ottimizzare le prestazioni dell'applicazione, evitando costose chiamate
+di sistema e semplificando la comunicazione tra i vari moduli Wasm.
+\begin{figure}[h]
+    \centering
+    \captionsetup{justification=centering}
+    \includegraphics[width=10cm]{./chapters/2.wasi-in-depth/images/4.nanoprocesses.png}
+    \label{nanoprocesses}
+    \caption{Nanoprocessi di Wasm}
+\end{figure}
+\\
+Tutte le caratteristiche di WebAssembly descritte finora rendono questa tecnologia una soluzione sicura per l'esecuzione
+di codice al di fuori del browser. Per esempio, se del codice malevolo tentasse di accedere a un file su cui la sandbox
+non ha i permessi, il modulo WebAssembly verrebbe interrotto sollevando un'eccezione e il processo terminerebbe con un
+errore. Inoltre, anche se la sandbox avesse i permessi per accedere a un determinato file, questi permessi potrebbero
+non essere associati al modulo contenente il codice malevolo e anche in questo caso il processo verrebbe interrotto. In
+relazione al codice vulnerabile, sarebbe estremamente difficile per un attaccante trovare un modulo che abbia sia
+l'autorizzazione a utilizzare una determinata system call sia l'autorizzazione su un determinato file nel filesystem.
+
+% \subsection{Interazione tra i nanoprocessi}
+
+
+\subsection{Capability Based Model}
+Il modello basato sulle capacità è un approccio alla sicurezza informatica che mira a garantire la protezione dei
+sistemi mediante la concessione di autorizzazioni specifiche, chiamate "capacità", ai processi del sistema. Questo
+modello è stato concepito per la prima volta negli anni sessanta\cite{capability-based-security} e si basa su tecniche
+di sviluppo che mirano ad assegnare privilegi minimi\cite{Saltzer1975ThePO} ai processi per consentire loro di eseguire
+solo le operazioni necessarie per svolgere il loro compito specifico. È un'alternativa alle ACL (Access Control
+List)\cite{samarati2001access} che sono un metodo di controllo degli accessi basato su liste di controllo degli accessi,
+dove ogni oggetto (come file, cartelle, stampanti, ecc.) ha una lista di controllo degli accessi associata che contiene
+una serie di voci per specificare quali utenti o gruppi hanno il permesso di accedere all'oggetto e quali tipi di
+accesso sono consentiti (come lettura, scrittura, esecuzione, ecc.). In un modello di sicurezza basato su capability,
+ogni processo ha un insieme di capacità specifiche che gli consentono di accedere alle risorse del sistema. Una capacità
+non è altro che una chiave di autorità, associata ad un particolare oggetto. Possiamo pensarla come un indice che punta
+ad una tupla\cite{wasm-capability-tuple} (x, r), dove x è l'oggetto ed r è l'insieme dei diritti d'accesso su di esso.
+Ad esempio, se la tupla (file1, \{leggi, scrivi\}) è associata ad un processo tramite una reference mantenuta da questo,
+tale processo può leggere e scrivere sul file1, ma non può eseguire altre azioni su di esso. Quando un processo deve
+accedere all'oggetto, può farlo senza richiedere l'autorizzazione al sistema operativo, in quanto il possesso della
+capability (la reference) rappresenta già l'autorizzazione per farlo. In un modello basato sulle capabilities, il
+sistema operativo non è responsabile del controllo delle autorizzazioni per i processi, ma piuttosto della gestione
+della lista di capabilities disponibili e della prevenzione di eventuali modifiche non autorizzate.
+\subsubsection{Un esempio}
+Supponiamo che un processo abbia in memoria il seguente path:
+\begin{lstlisting}
+    /etc/shadow
+\end{lstlisting}
+Questo rappresenta il nostro oggetto x della tupla e supponiamo poi di aver associato all'oggetto anche il diritto di
+lettura r: 
+\begin{lstlisting}
+    O_RDWR
+\end{lstlisting}
+Così da avere la tupla (/etc/shadow, O\_RDWR). Questa non rappresenta ancora la capability per il processo di accedere
+all'oggetto poiché non si può verificare l'autorità su di esso. Ipotizziamo ora di avere anche il file descriptor per
+tale file.
+\begin{lstlisting}
+    int fd = open("/etc/shadow", O_RDWR);
+\end{lstlisting}
+La variabile fd contiene l'indice di un descrittore di file presente nella tabella dei descrittori di file del processo
+e ciò rappresenta la capability dell'oggetto a cui si sta accedendo. La presenza di questo descrittore nella tabella dei
+descrittori è sufficiente per garantire che il processo abbia accesso legittimo all'oggetto. \\
+
+WASI adotta il modello di Nuxi CloudABI\footnote{\url{https://github.com/NuxiNL/cloudabi}}, che unisce i concetti di
+POSIX e del modello capability based. In questo modello, ogni risorsa del sistema, come file, directory e socket, è
+identificata da un file descriptor UNIX-like, che rappresenta la capability su un certo oggetto del sistema. Ciò
+significa che un processo non può accedere a tale oggetto se non è in possesso della capability adatta. Per esempio,
+WASI non permette l'accesso alla system call open() che restituisce un file descriptor, ma al contrario, utilizza la
+opennat system call, che richiede un file descriptor precedentemente aperto, ovvero la capability associata.
+Essenzialmente quindi, un modulo Wasm potrà interagire, ad esempio con il filesystem, solo se la sandbox gli fornirà in
+precedenza le capabilities necessarie su di una certa directory all'avvio. Questi file descriptor saranno aperti in
+anticipo dalla sandbox tramite la \hyperref[sec:libpreopen]{Libpreopen} e passati ai moduli Wasm quando necessario.
+\subsubsection{Il modello in azione: un esempio}
+Per comprendere meglio questo modello, possiamo analizzare
+un'applicazione\footnote{\url{https://github.com/ilcors-dev/bachelor-thesis/blob/main/prototypes/1.file/src/main.rs}}
+scritta in Rust\footnote{\url{https://www.rust-lang.org/}} che si occupa di copiare dei file del filesystem da una
+posizione ad un'altra. Per eseguire il modulo Wasm generato dalla compilazione del codice sorgente, utilizzeremo il
+runtime Wasmtime.
+\begin{figure}[H]
+    \centering
+    \captionsetup{justification=centering}
+    \includegraphics[width=15cm]{./chapters/2.wasi-in-depth/images/5.wasi_capability_example.png}
+    \label{wasi_capabilities_example}
+    \caption{Il modello capability based in azione}
+\end{figure}
+Compiliamo il programma tramite cargo, il gestore di pacchetti predefinito di Rust.
+\begin{lstlisting}
+    cargo build --target wasm32-wasi
+\end{lstlisting}
+
+E proviamo ad eseguirlo senza garantire le capability necessarie tramite.
+
+\begin{lstlisting}
+    wasmtime target/wasm32-wasi/debug/file.wasm tocopy.txt /tmp/out.txt
+    error opening input tocopy.txt: failed to find a pre-opened file descriptor through which "tocopy.txt" could be opened
+\end{lstlisting}
+Cosa è andato storto? Analizzando l'errore, si evince che il programma sta tentando di aprire un file chiamato
+'tocopy.txt', ma non dispone del file descriptor corrispondente necessario. In altre parole, Wasmtime non ha fornito le
+capability adatte per consentire all'applicazione di eseguire la copia del file. \\
+Proviamo invece ora a fornire le giuste capability in questo modo:
+\begin{lstlisting}
+    wasmtime --dir=. --dir=/tmp target/wasm32-wasi/debug/file.wasm tocopy.txt /tmp/out.txt
+    done!
+\end{lstlisting}
+Analizziamo cosa è successo. L'opzione --dir istruisce Wasmtime di pre-aprire la cartella corrente '.' e la cartella di
+destinazione '/tmp' rendendole entrambi disponibili al programma. Quando l'applicazione chiama la funzione File::open
+sta effettivamente chiamando la system call open() passando come parametro il path del file. In questo frangente
+interviene la WASI libc, che in modo trasparente, traduce il path in un path relativo a quello già pre-aperto in
+precedenza da Wasmtime utilizzando la libreria \hyperref[sec:libpreopen]{Libpreopen}. \\In questo modo WASI è in grado
+di adottare il modello capability based e portarlo a livello di system call senza che il programma in sè debba essere
+modificato in qualche modo particolare.
+
+È importante anche notare che, di default, la sandbox non espone la variabile d'ambiente \$PWD all'applicazione
+WebAssembly, la directory corrente va pertanto passata attraverso un path relativo. Infatti:
+\begin{lstlisting}
+    wasmtime --dir=\$PWD --dir=/tmp target/wasm32-wasi/debug/file.wasm tocopy.txt /tmp/out.txt
+    error opening input tocopy.txt: failed to find a pre-opened file descriptor through which "tocopy.txt" could be opened
+\end{lstlisting}
+
+Parlando di directory corrente con '.', cosa succede con i '..', ovvero i path traversal? Funzionano? Sappiamo che in
+applicazioni tradizionali la sanificazione dell'input è a carico dello sviluppatore, mentre con WASI?
+
+\begin{lstlisting}
+    wasmtime --dir=. --dir=/tmp target/wasm32-wasi/debug/file.wasm tocopy.txt /tmp/../etc/passwd
+    error opening output /tmp/../etc/passwd: failed to find a pre-opened file descriptor through which "/tmp/../etc/passwd" could be opened
+\end{lstlisting}
+
+Come possiamo notare l'applicazione viene bloccata prima di raggiungere il sistema operativo, infatti l'errore non
+riguarda gli eventuali permessi necessari per accedere ad /etc/passwd, bensì parla della mancanza di capacità necessaria
+per effettuare l'operazione. Le applicazioni WASI non hanno possibilità di accedere a file al di fuori delle directory
+esplicitamente garantite dalla sandbox!
+
+Ciò si traduce in applicazioni molto più sicure di default grazie alla riduzione della superficie di attacco
+disponibile.
