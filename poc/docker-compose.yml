@@ -10,5 +10,7 @@ services:
     ports:
       - '3306:3306'
     environment:
+      MYSQL_USER: bachelor
+      MYSQL_PASSWORD: bachelor
       MYSQL_ROOT_PASSWORD: bachelor
       MYSQL_DATABASE: wasi-chat
