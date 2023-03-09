@@ -34,6 +34,18 @@ impl CreateMessage {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub(crate) struct UpdateMessage {
+    pub text: String,
+}
+
+impl UpdateMessage {
+    pub(crate) fn from_bytes(b: &Bytes) -> Result<Self> {
+        let r: UpdateMessage = serde_json::from_slice(b)?;
+        Ok(r)
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct Message {
     pub id: u64,
     pub ulid: String,
