@@ -203,13 +203,22 @@ il database è stato svuotato.
         \caption{10000 richieste in sequenza verso NodeJS}\label{fig:10000_req_node} \endminipage\hfill
 \end{figure}
 
+\begin{figure}[!htb]
+    \minipage{0.48\textwidth}
+        \includegraphics[width=\linewidth]{chapters/3.poc/benchmarks_images/wasi_10000_single_req_cpu.png}
+        \caption{Utilizzo CPU per Wasm}\label{fig:10000_req_wasi_cpu} \endminipage\hfill
+    \minipage{0.48\textwidth}
+        \includegraphics[width=\linewidth]{chapters/3.poc/benchmarks_images/node_10000_single_req_cpu.png}
+        \caption{Utilizzo CPU per NodeJS}\label{fig:10000_req_node_cpu} \endminipage\hfill
+\end{figure}
+
 Il primo test effettuato mira a valutare le prestazioni dei due servizi sotto un carico di 10000 richieste effettuate in
 modo sequenziale. Il test è stato ripetuto 5 volte, per un totale di 50000 richieste. Si può notare come Wasm non riesca
 a soddisfare al carico di richieste come NodeJS. Nel primo caso i tempi di risposta risultano essere tra i 4ms e i 6ms
 mentre nel secondo sono tutti sotto al millisecondo. Vediamo ora come si comportano i due nel gestire richieste in
 parallelo ovvero simulando l'utilizzo del servizio da parte di più utenti nello stesso momento.
 
-\begin{figure}[!htb]
+\begin{figure}[H]
     \minipage{0.48\textwidth}
         \includegraphics[width=\linewidth]{chapters/3.poc/benchmarks_images/wasi_100_thread_1000_req.png}
         \caption{100 utenti e 1000 richieste in simultanea verso Wasm}\label{fig:100_thread_1000_req_wasi}
@@ -217,6 +226,17 @@ parallelo ovvero simulando l'utilizzo del servizio da parte di più utenti nello
     \minipage{0.48\textwidth}
         \includegraphics[width=\linewidth]{chapters/3.poc/benchmarks_images/node_100_thread_1000_req.png}
         \caption{100 utenti e 1000 richieste in simultanea verso NodeJS}\label{fig:100_thread_1000_req_node}
+    \endminipage\hfill
+\end{figure}
+
+\begin{figure}[H]
+    \minipage{0.48\textwidth}
+        \includegraphics[width=\linewidth]{chapters/3.poc/benchmarks_images/wasi_100_thread_1000_req_cpu.png}
+        \caption{Utilizzo CPU per Wasm}\label{fig:100_thread_1000_req_wasi_cpu}
+    \endminipage\hfill
+    \minipage{0.48\textwidth}
+        \includegraphics[width=\linewidth]{chapters/3.poc/benchmarks_images/node_100_thread_1000_req_cpu.png}
+        \caption{Utilizzo CPU per NodeJS}\label{fig:100_thread_1000_req_node_cpu}
     \endminipage\hfill
 \end{figure}
 
