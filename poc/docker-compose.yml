@@ -1,10 +1,4 @@
 services:
-  client:
-    image: nginx:alpine
-    ports:
-      - 8090:80
-    volumes:
-      - ./client/dist:/usr/share/nginx/html
   db:
     image: mysql:8.0
     ports:
