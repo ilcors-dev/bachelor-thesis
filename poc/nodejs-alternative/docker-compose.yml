@@ -1,0 +1,24 @@
+services:
+  db:
+    image: mysql:8.0
+    ports:
+      - '3306:3306'
+    environment:
+      MYSQL_USER: bachelor
+      MYSQL_PASSWORD: bachelor
+      MYSQL_ROOT_PASSWORD: bachelor
+      MYSQL_DATABASE: wasi-chat
+    # test if mysql is ready every 30 seconds
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  chat:
+    image: ghcr.io/ilcors-dev/chat-nodejs:latest
+    ports:
+      - '3000:3000'
+    restart: always
+    # since the chat service depends on the db service, we need to wait for the db service to be ready
+    depends_on:
+      - db
