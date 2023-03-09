@@ -12,8 +12,8 @@ db_host = { default = "127.0.0.1" }
 db_name = { default = "wasi-chat" }
 
 [[component]]
-id = "message-api"
-source = "api/message/target/wasm32-wasi/release/message_api.wasm"
+id = "message-service"
+source = "api/message/target/wasm32-wasi/release/message_service.wasm"
 allowed_http_hosts = []
 [component.trigger]
 route = "/api/messages/..."
