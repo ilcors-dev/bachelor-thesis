@@ -3,6 +3,6 @@
         "editor.defaultFormatter": "rust-lang.rust-analyzer"
     },
     "rust-analyzer.linkedProjects": [
-        "backend/api/message/Cargo.toml"
+        "api/message/Cargo.toml"
     ],
 }
