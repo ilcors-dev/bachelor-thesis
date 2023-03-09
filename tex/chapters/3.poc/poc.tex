@@ -1,5 +1,5 @@
 \chapter{Prototipo}
-Andiamo ora a mettere in pratica tutto quello che è stato detto su WASI sviluppando un semplice prototipo di una
+Andiamo ora a mettere in pratica ciò che è stato detto su WASI sviluppando un semplice prototipo di una
 chat\footnote{\url{https://github.com/ilcors-dev/bachelor-thesis/tree/main/poc}} sviluppata secondo l'architettura a
 microservizi.
 
@@ -56,9 +56,9 @@ Abbiamo in precedenza visto che WASI non espone ancora in modo stabile alcuna AP
 networking\footnote{\url{https://github.com/WebAssembly/wasi-sockets}}, per questo motivo il framework utilizza
 un'implementazione custom per inizializzare un demone in ascolto alle richieste HTTP. Questo demone è gestito da WAGI
 (WebAssembly Gateway Interface)\footnote{\url{https://github.com/deislabs/wagi}} un'implementazione delle interfacce
-CGI\cite{RFC3875} per WebAssembly, in grado anche di gestire le richieste in modalità multi-threaded. Si noti che se
-anche fosse possibile utilizzare le API standard di WASI per creare il demone, non lo si potrebbe creare multi-threaded,
-in quanto anche tale API è ancora in fase di discussione\footnote{\url{https://github.com/WebAssembly/wasi-threads}}.
+CGI\cite{RFC3875} per WebAssembly, in grado anche di gestire le richieste in modalità multi-thread. Si noti che se anche
+fosse possibile utilizzare le API standard di WASI per creare il demone, non lo si potrebbe creare multi-thread, in
+quanto anche tale API è ancora in fase di discussione\footnote{\url{https://github.com/WebAssembly/wasi-threads}}.
 
 \subsubsection{WAGI}
 Prima di introdurre WAGI, è utile capire cosa sono le interfacce CGI. Le CGI sono una specifica che permette ai web
@@ -76,7 +76,7 @@ richieste HTTP nel seguente modo:
     \item Il payload = standard input del programma
 \end{itemize}
 
-La conseguente risposta dei moduli Wasm viene, come per le CGI, scritta sullo standard output e inviata ai client.
+e la conseguente risposta dei moduli Wasm viene, come per le CGI, scritta sullo standard output e inviata ai client.
 
 Il valore aggiunto di WAGI è che risulta a sua volta un modulo Wasm eseguito da Wasmtime e che seppur utilizzi
 un'implementazione custom per la gestione delle richieste HTTP e dei thread, segue comunque lo standard WASI in quanto:
@@ -90,12 +90,11 @@ ed inoltre
     \item Non può eseguire altre applicazioni che non siano moduli Wasm
 \end{itemize}
 
-I moduli Wasm caricati da WAGI vengono chiamati WAGIs ed essendo caricati dinamicamente da Wasmtime non sono processi
-esterni, ma sono parte della stessa sandbox. I WAGIs vengono pre-caricati di default e mantenuti in memoria per tutta la
-durata dell'esecuzione dell'applicazione.
+I moduli Wasm caricati da WAGI vengono chiamati WAGIs e sono parte della stessa sandbox di Wasmtime. I WAGIs vengono
+pre-caricati e mantenuti in memoria per tutta la durata dell'esecuzione dell'applicazione.
 
 \subsubsection{Mysql e Redis}
-Mysql è un database relazionale che si occuperà di salvare in modo persistente le chat, i messaggi e le sessioni utente.
+Mysql è un database relazionale che si occupa di salvare in modo persistente le chat, i messaggi e le sessioni utente.
 Redis è un datastore che mantiene in memoria dati utili all'applicazione: nel nostro caso il numero di utenti online.
 
 \subsubsection{Docker}
@@ -142,17 +141,16 @@ necessarie.
     \caption{Configurazione di un microservizio}
 \end{figure}
 
-Si noti la flag --release nel comando 'cargo build', questo è una flag per il compilatore Rust che indica di ottimizzare
-il codice durante la compilazione.
+Si noti la flag --release nel comando 'cargo build', questa è una direttiva per il compilatore Rust che gli indica di
+ottimizzare il codice durante la compilazione.
 
 \subsection{Interazione}
 Parliamo ora di come avviene l'interazione tra le componenti dell'applicazione.
 
-L'applicazione viene avviata tramite il comando spin build --up che esegue il build delle componenti definite in
-spin.toml e avvia il web server WAGI in ascolto sulla porta 3000. All'arrivo di una richiesta WAGI, richiama il
-componente corrispondente all'url richiesto, se lo trova, e lo carica nella sandbox avviandolo con i parametri della
-richiesta. Questo step è trasparente allo sviluppatore in quanto la gestione del web server sottostante è gestita
-automaticamente.
+L'applicazione viene avviata tramite il comando spin build --up che esegue il build delle componenti definite nel file
+di configurazione spin.toml e avvia il web server WAGI in ascolto sulla porta 3000. All'arrivo di una richiesta WAGI,
+carica il modulo corrispondente nella sandbox all'url richiesto, se lo trova, e lo avvia con i parametri necessari.
+Questo step è trasparente allo sviluppatore in quanto la gestione del web server sottostante è gestita automaticamente.
 
 \begin{figure}[h]
     \centering
@@ -162,8 +160,8 @@ automaticamente.
     \caption{Entry point delle operazioni CRUD al microservizio dei messaggi}
 \end{figure}
 
-Il componente specifica l'entry point attraverso la direttiva \#[http\_component], esegue il parsing della richiesta e
-ne elabora la risposta.
+Il modulo specifica l'entry point attraverso la direttiva \#[http\_component], esegue il parsing della richiesta e ne
+elabora la risposta.
 
 La prima interazione tra client e server è necessaria per generare il token di sessione che identifica il cliente che
 verrà usato per tutte le richieste successive. Il token viene generato dal session\_service e viene salvato sul
@@ -184,9 +182,9 @@ GitHub\footnote{\url{https://github.com/ilcors-dev/bachelor-thesis/tree/main/poc
 Intanto si deve notare come il microservizio scritto in NodeJS debba esporre un web server per poter essere raggiunto
 dall'esterno mentre il microservizio in Wasm è esposto direttamente da WAGI.
 
-La gestione di Rust risulta sicuramente più complessa, ma questo è dovuto al fatto che il linguaggio è più esigente e
-richiede un approccio più metodico, mentre l'implementazione in NodeJS è più semplice e veloce da scrivere ma più prona
-agli errori.
+In secondo luogo c'è da notare la gestione di Rust, che risulta sicuramente più complessa, ed è dovuta dal fatto che il
+linguaggio è più esigente e richiede un approccio più metodico, mentre l'implementazione in NodeJS è più semplice e
+veloce da scrivere ma più prona agli errori runtime.
 
 \subsection{Benchmark}
 Andiamo ad analizzare le prestazioni dei due microservizi usando uno strumento chiamato
@@ -258,18 +256,20 @@ di creare l'immagine e di pubblicarla su GHCR. Entrambe le immagini sono reperib
 \url{https://github.com/ilcors-dev?tab=packages}
 
 Possiamo analizzare le differenze tra le due soluzioni in termini di dimensioni su disco. Si può notare, attraverso
-l'image manifest, come quella di NodeJS sia estremamente più pesante di quella di Wasm nonostante includa le stesse
-funzionalità. La prima occupa uno spazio di
+l'image manifest reperibile direttamente dall'interfaccia utente del sito, come quella di NodeJS sia estremamente più
+pesante di quella di Wasm nonostante includa le stesse funzionalità. La prima occupa uno spazio di
 65MB\footnote{\url{https://github.com/users/ilcors-dev/packages/container/chat-nodejs/76069897?tag=latest}} circa,
 mentre la seconda appena
 2,4MB\footnote{\url{https://github.com/users/ilcors-dev/packages/container/wasi-chat-poc/76056566?tag=latest}}
 
 Questo è dovuto al fatto che l'applicazione Wasm è già pronta per essere eseguita in un runtime Wasm e non necessita di
 altre dipendenze, mentre l'applicazione NodeJS deve, oltre ad includere tutte le dipendenze necessarie, essere eseguita
-su NodeJS inserito in una versione leggera di Linux, ovvero Alpine Linux.
+su NodeJS all'interno di una versione leggera di Linux, chiamata Alpine Linux.
 
 Avendo entrambe le immagini disponibili su GHCR è possibile effettuare il deployment delle due applicazioni in locale.
-Per l'applicazione NodeJS è necessario configurare il file docker-compose.yml nel seguente modo:
+
+Per l'applicazione NodeJS è necessario configurare sia il container per l'applicazione che il container per la
+persistenza dei dati tramite il file docker-compose.yml:
 
 \begin{figure}[!htb]
     \includegraphics[width=\linewidth]{chapters/3.poc/images/5.docker-compose-nodejs.png}
@@ -282,9 +282,9 @@ e per eseguirla è sufficiente il comando
 docker-compose up
 \end{verbatim}
 
-Anche per l'applicazione Wasm è necessario usare Docker Compose, ma solo per il database. Non se ne riporta l'esempio in
-quanto è identico a quello precedentemente a meno della configurazione dell'applicazione NodeJS. Per eseguire
-l'applicazione Wasm è sufficiente il comando
+Anche per l'applicazione Wasm è necessario usare Docker Compose, ma solo per avviare il container per la persistenza.
+Non se ne riporta l'esempio in quanto è identico a quello precedentemente a meno della configurazione dell'applicazione
+NodeJS. Per eseguire l'applicazione Wasm è sufficiente il comando
 \begin{verbatim}
     spin up -f ghcr.io/ilcors-dev/wasi-chat-poc:latest
 \end{verbatim}
@@ -292,18 +292,24 @@ l'applicazione Wasm è sufficiente il comando
 che si occupa di eseguire un pull dell'immagine e di eseguirla in locale.
 
 \section{Vantaggi e Svantaggi}
-Come abbiamo visto la soluzione proposta ha rivelato dei vantaggi e degli svantaggi.
+Nella soluzione proposta per l'applicazione, l'utilizzo di Wasm ha dimostrato di avere sia vantaggi che svantaggi. Da un
+lato, ha permesso una maggiore facilità di deployment dell'applicazione grazie alla sua portabilità e alla possibilità
+di eseguire il codice su diverse piattaforme. D'altra parte, tuttavia, ha avuto un impatto negativo sulle prestazioni
+dell'applicazione.
 
-La scelta di utilizzare Wasm si è rivelata vincente per quanto riguarda la facilità del deployment mentre ha avuto un
-impatto negativo sulle prestazioni. Questa nota negativa è dovuta sicuramente al fatto che WASI si trova ancora in una
-fase acerba di sviluppo e non è tanto maturo come la controparte NodeJS presa in esame.
+Questa nota negativa è dovuta principalmente allo stato ancora acerbo di WASI, il quale non è ancora altrettanto maturo
+come quello della controparte NodeJS preso in esame. Tuttavia, con il passare del tempo e l'evoluzione della tecnologia,
+è probabile che WASI diventi sempre più efficiente e performante.
 
-Si noti inoltre come ogni microservizio dell'applicazione NodeJS dovrà esporre un server HTTP e avere la sua modalità di
-deployment simile a quella illustrata nel paragrafo precedente. Questo non è necessario invece per l'applicazione Wasm in
-quanto Wasmtime e WAGI si occupano dell'esposizione del server HTTP e includono già tutti i microservizi necessari per
-l'esecuzione dell'applicazione.
+Inoltre, è importante notare che ogni microservizio dell'applicazione NodeJS richiede la sua modalità di deployment, che
+può essere un'operazione complicata e richiedere molto tempo. Invece, l'applicazione Wasm offre un vantaggio
+significativo in questo senso, poiché Wasmtime e WAGI si occupano dell'esposizione del server HTTP e includono già tutti
+i microservizi necessari per l'esecuzione dell'applicazione.
 
-\section{Sviluppi futuri}
-In futuro sarebbe utile effettuare i test dell'applicazione in ambiente orchestrato tramite Kubernetes. In questo modo
-si potrebbero testare gli start time dei microservizi Wasm e valutarne la differenza con start time della stessa
-applicazione scritta in NodeJS.
+Infine, è importante evidenziare come l'utilizzo combinato di Docker e WASI rappresenti una soluzione ideale per lo
+sviluppo di applicazioni complesse. In particolare, Docker offre una piattaforma completa per la costruzione dei
+container e l'esecuzione delle tecnologie complementari necessarie all'applicazione, rappresentando la spina dorsale del
+sistema. Mentre, WASI offre la portabilità e la sicurezza del codice Wasm, consentendo di eseguire moduli altamente
+ridotti in una sandbox isolata e garantendo la compatibilità dell'applicazione su diverse piattaforme. Insieme, queste
+tecnologie consentono di semplificare il processo di deployment dell'applicazione, garantire la scalabilità del sistema
+e ridurre i tempi di sviluppo.
