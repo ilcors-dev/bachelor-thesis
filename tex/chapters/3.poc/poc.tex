@@ -20,11 +20,11 @@ Il prototipo può essere scomposto in tre layer distinti.
 Le funzionalità dell'applicazione, implementate dal layer backend, sono le seguenti:
 \begin{itemize}
     \item Gestione delle chat: si occupa della gestione delle diverse chat presenti, permette la creazione e
-    l'eliminazione di esse e può applicare rate limiting ai messaggi.
+    l'eliminazione di esse.
     \item Gestione dei messaggi: si occupa delle operazioni CRUD (create, read, update, delete) dei messaggi nelle chat
     oltre che della loro sincronizzazione in realtime per i clienti.
     \item Gestione delle sessioni: si occupa della gestione delle sessioni utente, ovvero gli identificativi di ogni
-    cliente connesso. È estremamente importante in quanto ogni entità nell'applicazione è legata si lega ad essa.
+    cliente connesso. È estremamente importante in quanto ogni entità nell'applicazione si lega ad essa.
     \item Gestione degli utenti connessi: è un servizio a fini statistici, in quanto raccoglie il numero degli utenti
     attualmente online e ne permette la lettura.
     \item Gestione del frontend: si occupa della fruizione dell'interfaccia grafica ai clienti dell'applicazione. Può
@@ -34,10 +34,10 @@ Le funzionalità dell'applicazione, implementate dal layer backend, sono le segu
 \subsection{Le tecnologie backend}
 \subsubsection{Rust}
 Rust è stato scelto in quanto linguaggio altamente performante e maturo nell'ambiente WebAssembly. È altamente
-efficiente grazie alla sua natura di basso livello, alla forte tipizzazione e al sistema di gestione della memoria
-altamente ottimizzato. La forte tipizzazione garantisce una bassa probabilità di errori a runtime se comparato ad altri
-linguaggi di più alto livello. Si noti che avremmo potuto scegliere qualsiasi altro linguaggio che supporta WebAssembly
-per le ragioni di portabilità introdotte in precedenza.
+efficiente grazie alla sua natura di basso livello, alla forte tipizzazione e al sistema di gestione della memoria. La
+forte tipizzazione garantisce una bassa probabilità di errori a runtime se comparato ad altri linguaggi di più alto
+livello. Si noti che avremmo potuto scegliere qualsiasi altro linguaggio che supporta WebAssembly per le ragioni di
+portabilità introdotte in precedenza.
 
 \subsubsection{Wasmtime}
 È il runtime utilizzato per eseguire i moduli Wasm e rappresenta il cuore dell'applicazione. Lo abbiamo
@@ -46,17 +46,19 @@ della sua conformità allo standard che lo rende una scelta affidabile e robusta
 microservizi.
 
 \subsubsection{Spin Framework}
+\label{sec:spin-framework}
 È un framework basato su Wasmtime che integra in esso le basilari funzionalità necessarie agli scopi del prototipo come
 l'interazione con le richieste HTTP, il conseguente routing e la gestione della comunicazione con i database. È uno dei
 primi framework presenti nel panorama WASI e per questo motivo è stato scelto per facilitare la realizzazione del
-prototipo. Oltre a Rust supporta C/C++, Javascript, Python e Go. Abbiamo in precedenza visto che WASI non espone ancora
-in modo stabile alcuna API per il layer networking\footnote{\url{https://github.com/WebAssembly/wasi-sockets}}, per
-questo motivo il framework utilizza un'implementazione custom per inizializzare un demone in ascolto per le richieste
-HTTP. Questo demone è gestito da WAGI (WebAssembly Gateway Interface)\footnote{\url{https://github.com/deislabs/wagi}}
-un'implementazione delle interfacce CGI\cite{RFC3875} per WebAssembly, in grado anche di gestire le richieste in
-modalità multi-threaded. Si noti che se anche fosse possibile utilizzare le API standard di WASI per creare il demone,
-non lo si potrebbe creare multi-threaded, in quanto anche tale API è ancora in fase di
-discussione\footnote{\url{https://github.com/WebAssembly/wasi-threads}}.
+prototipo. Oltre a Rust supporta C/C++, Javascript, Python e Go.
+
+Abbiamo in precedenza visto che WASI non espone ancora in modo stabile alcuna API per il layer
+networking\footnote{\url{https://github.com/WebAssembly/wasi-sockets}}, per questo motivo il framework utilizza
+un'implementazione custom per inizializzare un demone in ascolto alle richieste HTTP. Questo demone è gestito da WAGI
+(WebAssembly Gateway Interface)\footnote{\url{https://github.com/deislabs/wagi}} un'implementazione delle interfacce
+CGI\cite{RFC3875} per WebAssembly, in grado anche di gestire le richieste in modalità multi-threaded. Si noti che se
+anche fosse possibile utilizzare le API standard di WASI per creare il demone, non lo si potrebbe creare multi-threaded,
+in quanto anche tale API è ancora in fase di discussione\footnote{\url{https://github.com/WebAssembly/wasi-threads}}.
 
 \subsubsection{WAGI}
 Prima di introdurre WAGI, è utile capire cosa sono le interfacce CGI. Le CGI sono una specifica che permette ai web
@@ -66,8 +68,8 @@ ambiente web, e di restituire il risultato al client.
 WAGI implementa questa specifica per WebAssembly, esponendo un web
 server\footnote{\url{https://github.com/deislabs/wagi/blob/main/src/wagi_server.rs}} HTTP in grado di caricare
 dinamicamente i moduli Wasm attraverso
-Wasmtime\footnote{\url{https://github.com/deislabs/wagi/blob/main/src/wasm_runner.rs}}. Esegue i moduli mappando i
-componenti delle richieste nel seguente modo:
+Wasmtime\footnote{\url{https://github.com/deislabs/wagi/blob/main/src/wasm_runner.rs}}. Esegue i moduli mappando le
+richieste HTTP nel seguente modo:
 \begin{itemize}
     \item Header = variabili d'ambiente
     \item I parametri della query = argomenti del programma
@@ -76,7 +78,7 @@ componenti delle richieste nel seguente modo:
 
 La conseguente risposta dei moduli Wasm viene, come per le CGI, scritta sullo standard output e inviata ai client.
 
-Il valore aggiunto di WAGI è che risulta a sua volta un modulo Wasm eseguito da Wasmtime e è che seppur utilizzi
+Il valore aggiunto di WAGI è che risulta a sua volta un modulo Wasm eseguito da Wasmtime e che seppur utilizzi
 un'implementazione custom per la gestione delle richieste HTTP e dei thread, segue comunque lo standard WASI in quanto:
 \begin{itemize}
     \item Non può accedere ai file del sistema host senza la specifica autorizzazione (capability)
@@ -93,9 +95,8 @@ esterni, ma sono parte della stessa sandbox. I WAGIs vengono pre-caricati di def
 durata dell'esecuzione dell'applicazione.
 
 \subsubsection{Mysql e Redis}
-Mysql è un database relazionale che si occuperà di salvare in modo persistente le chat e i messaggi. Redis il secondo è
-un datastore che mantiene in memoria dati utili all'applicazione: nel nostro caso il numero di utenti online e le
-sessioni attive.
+Mysql è un database relazionale che si occuperà di salvare in modo persistente le chat, i messaggi e le sessioni utente.
+Redis è un datastore che mantiene in memoria dati utili all'applicazione: nel nostro caso il numero di utenti online.
 
 \subsubsection{Docker}
 Docker viene utilizzato per la creazione e gestione dei container che ospitano il livello della persistenza dei dati.
@@ -105,14 +106,16 @@ Non entreremo nel dettaglio delle tecnologie frontend in quanto al di fuori dell
 una breve descrizione per comprenderle meglio.
 
 \begin{itemize}
-    \item ReactJS\footnote{\url{https://github.com/facebook/react}}: un framework Javascript ampiamente utilizzato che consente di creare applicazioni web interattive e
-    dinamiche tramite l'uso di componenti - unità di codice riutilizzabili che possono essere combinati per creare
-    interfacce grafiche complesse.
-    \item TanStackQuery\footnote{\url{https://github.com/TanStack/query}}: una libreria Javascript che facilita la gestione dello stato dell'applicazione e delle chiamate asincrone ai microservizi.
-    \item Typescript\footnote{\url{https://github.com/microsoft/TypeScript}}: un linguaggio di programmazione che estende Javascript aggiungendo la tipizzazione statica. Ciò
-    permette di scrivere codice più pulito e di prevenire errori di runtime.
-    \item Vite\footnote{\url{https://github.com/vitejs/vite}}: uno strumento per lo sviluppo locale e il bundling dei file Javascript e CSS, che permette di
-    ottimizzare il carico delle risorse e ridurre i tempi di caricamento delle pagine web.
+    \item ReactJS\footnote{\url{https://github.com/facebook/react}}: un framework Javascript ampiamente utilizzato che
+    consente di creare applicazioni web interattive e dinamiche tramite l'uso di componenti - unità di codice
+    riutilizzabili che possono essere combinati per creare interfacce grafiche complesse.
+    \item TanStackQuery\footnote{\url{https://github.com/TanStack/query}}: una libreria Javascript che facilita la
+    gestione dello stato dell'applicazione e delle chiamate asincrone ai microservizi.
+    \item Typescript\footnote{\url{https://github.com/microsoft/TypeScript}}: un linguaggio di programmazione che
+    estende Javascript aggiungendo la tipizzazione statica. Ciò permette di scrivere codice più pulito e di prevenire
+    errori a runtime.
+    \item Vite\footnote{\url{https://github.com/vitejs/vite}}: uno strumento per lo sviluppo locale, la traduzione del
+    codice Typescript in Javascript e il bundling delle risorse statiche di un'applicazione web.
 \end{itemize}
 
 \begin{figure}[h]
@@ -139,20 +142,32 @@ necessarie.
     \caption{Configurazione di un microservizio}
 \end{figure}
 
-Si noti la flag --release nel comando di build, questo è una flag per il compilatore Rust che indica di ottimizzare il
-codice durante la compilazione.
+Si noti la flag --release nel comando 'cargo build', questo è una flag per il compilatore Rust che indica di ottimizzare
+il codice durante la compilazione.
 
 \subsection{Interazione}
 Parliamo ora di come avviene l'interazione tra le componenti dell'applicazione.
 
 L'applicazione viene avviata tramite il comando spin build --up che esegue il build delle componenti definite in
-spin.toml e avvia il web server WAGI in ascolto sulla porta 3000. All'arrivo di una richiesta WAGI richiama il
+spin.toml e avvia il web server WAGI in ascolto sulla porta 3000. All'arrivo di una richiesta WAGI, richiama il
 componente corrispondente all'url richiesto, se lo trova, e lo carica nella sandbox avviandolo con i parametri della
-richiesta. Il componente esegue la sua logica e restituisce una risposta al client.
+richiesta. Questo step è trasparente allo sviluppatore in quanto la gestione del web server sottostante è gestita
+automaticamente.
+
+\begin{figure}[h]
+    \centering
+    \captionsetup{justification=centering}
+    \includegraphics[width=15cm]{./chapters/3.poc/images/2.microservice_entrypoint.png}
+    \label{fig:2.microservice_entrypoint}
+    \caption{Entry point delle operazioni CRUD al microservizio dei messaggi}
+\end{figure}
+
+Il componente specifica l'entry point attraverso la direttiva \#[http\_component], esegue il parsing della richiesta e
+ne elabora la risposta.
 
 La prima interazione tra client e server è necessaria per generare il token di sessione che identifica il cliente che
 verrà usato per tutte le richieste successive. Il token viene generato dal session\_service e viene salvato sul
-database. Una volta ricevuto il token il cliente potrà effettuare richieste al server.
+database. Una volta ottenuto, il client può effettuare le richieste all'applicazione.
 
 % Un utente può essenzialmente fare due cose: interagire con le chat e scrivere messaggi. Ogni 
 
@@ -161,12 +176,134 @@ La sincronizzazione dei dati in tempo reale tra client e server è effettuata tr
 di questa scelta è dato dal fatto che al momento della scrittura del documento WASI non supporta la gestione delle
 WebSocket.
 
-\section{Un confronto con le soluzioni esistenti}
+\section{Un confronto}
+Confrontiamo il microservizio che si occupa della gestione dei messaggi con l'analogo scritto con NodeJS e Express per
+vedere le principali differenze. Il codice sorgente è disponibile su
+GitHub\footnote{\url{https://github.com/ilcors-dev/bachelor-thesis/tree/main/poc/nodejs-alternative}}.
+
+Intanto si deve notare come il microservizio scritto in NodeJS debba esporre un web server per poter essere raggiunto
+dall'esterno mentre il microservizio in Wasm è esposto direttamente da WAGI.
+
+La gestione di Rust risulta sicuramente più complessa, ma questo è dovuto al fatto che il linguaggio è più esigente e
+richiede un approccio più metodico, mentre l'implementazione in NodeJS è più semplice e veloce da scrivere ma più prona
+agli errori.
 
 \subsection{Benchmark}
+Andiamo ad analizzare le prestazioni dei due microservizi usando uno strumento chiamato
+JMeter\footnote{\url{https://jmeter.apache.org/}}. Il benchmark è stato effettuato su un computer con le seguenti
+caratteristiche: CPU Apple M1 8 core e 16 GB di RAM. I test mirano ad analizzare le prestazioni del microservizio in
+Wasm e del microservizio in NodeJS in termini di tempo di risposta e di numero di richieste al secondo. Sono stati
+effettuati vari benchmark secondo carichi diversi, per i servizi di inserimento dei messaggi. Al ripetersi di ogni test
+il database è stato svuotato.
+
+\begin{figure}[!htb]
+    \minipage{0.48\textwidth}
+        \includegraphics[width=\linewidth]{chapters/3.poc/benchmarks_images/wasi_10000_single_req.png}
+        \caption{10000 richieste in sequenza verso Wasm}\label{fig:10000_req_wasi} \endminipage\hfill
+    \minipage{0.48\textwidth}
+        \includegraphics[width=\linewidth]{chapters/3.poc/benchmarks_images/node_10000_single_req.png}
+        \caption{10000 richieste in sequenza verso NodeJS}\label{fig:10000_req_node} \endminipage\hfill
+\end{figure}
+
+Il primo test effettuato mira a valutare le prestazioni dei due servizi sotto un carico di 10000 richieste effettuate in
+modo sequenziale. Il test è stato ripetuto 5 volte, per un totale di 50000 richieste. Si può notare come Wasm non riesca
+a soddisfare al carico di richieste come NodeJS. Nel primo caso i tempi di risposta risultano essere tra i 4ms e i 6ms
+mentre nel secondo sono tutti sotto al millisecondo. Vediamo ora come si comportano i due nel gestire richieste in
+parallelo ovvero simulando l'utilizzo del servizio da parte di più utenti nello stesso momento.
+
+\begin{figure}[!htb]
+    \minipage{0.48\textwidth}
+        \includegraphics[width=\linewidth]{chapters/3.poc/benchmarks_images/wasi_100_thread_1000_req.png}
+        \caption{100 utenti e 1000 richieste in simultanea verso Wasm}\label{fig:100_thread_1000_req_wasi}
+    \endminipage\hfill
+    \minipage{0.48\textwidth}
+        \includegraphics[width=\linewidth]{chapters/3.poc/benchmarks_images/node_100_thread_1000_req.png}
+        \caption{100 utenti e 1000 richieste in simultanea verso NodeJS}\label{fig:100_thread_1000_req_node}
+    \endminipage\hfill
+\end{figure}
+
+Anche in questo caso Wasm non regge il confronto con NodeJS. Il primo ha tempi di risposta che arrivano fino ai 60ms
+mentre il secondo non supera i 12ms.
 
 \subsection{Il deployment}
+Valutiamo ora invece la gestione del deployment delle due soluzioni. In entrambi i casi si è scelto di creare due
+immagini dell'applicazione che seguano lo standard OCI. OCI è un formato comune per le immagini container che definisce
+uno standard per la creazione, la distribuzione e l'esecuzione di essi. Per creare l'immagine dell'applicazione NodeJS è
+stato utilizzato il seguente Dockerfile: 
+
+\begin{figure}[!htb]
+    \includegraphics[width=\linewidth]{chapters/3.poc/images/3.nodejs-dockerfile.png}
+    \caption{Creazione immagine Docker per l'applicazione NodeJS}\label{fig:nodejs-dockerfile}
+\end{figure}
+    
+Il Dockerfile ci permette di creare l'immagine dell'applicazione tramite il comando.
+\begin{verbatim}
+docker buildx build . -t ghcr.io/ilcors-dev/chat-nodejs:latest
+\end{verbatim}
+
+e di pubblicarla su GitHub Container Registry (GHCR), un gestore di immagini container, tramite
+
+\begin{verbatim}
+docker push ghcr.io/ilcors-dev/chat-nodejs:latest
+\end{verbatim}
+
+Per l'immagine dell'applicazione WASI invece è stato utilizzato il tool integrato nel
+\hyperref[sec:spin-framework]{Framework Spin} che ci permette, tramite
+
+\begin{verbatim}
+    spin registry push ghcr.io/ilcors-dev/wasi-chat-poc:latest
+\end{verbatim}
+
+di creare l'immagine e di pubblicarla su GHCR. Entrambe le immagini sono reperibili al seguente link:
+\url{https://github.com/ilcors-dev?tab=packages}
+
+Possiamo analizzare le differenze tra le due soluzioni in termini di dimensioni su disco. Si può notare, attraverso
+l'image manifest, come quella di NodeJS sia estremamente più pesante di quella di Wasm nonostante includa le stesse
+funzionalità. La prima occupa uno spazio di
+65MB\footnote{\url{https://github.com/users/ilcors-dev/packages/container/chat-nodejs/76069897?tag=latest}} circa,
+mentre la seconda appena
+2,4MB\footnote{\url{https://github.com/users/ilcors-dev/packages/container/wasi-chat-poc/76056566?tag=latest}}
+
+Questo è dovuto al fatto che l'applicazione Wasm è già pronta per essere eseguita in un runtime Wasm e non necessita di
+altre dipendenze, mentre l'applicazione NodeJS deve, oltre ad includere tutte le dipendenze necessarie, essere eseguita
+su NodeJS inserito in una versione leggera di Linux, ovvero Alpine Linux.
+
+Avendo entrambe le immagini disponibili su GHCR è possibile effettuare il deployment delle due applicazioni in locale.
+Per l'applicazione NodeJS è necessario configurare il file docker-compose.yml nel seguente modo:
+
+\begin{figure}[!htb]
+    \includegraphics[width=\linewidth]{chapters/3.poc/images/5.docker-compose-nodejs.png}
+    \caption{Docker compose per l'applicazione NodeJS}\label{fig:nodejs-dockercompose}
+\end{figure}
+
+e per eseguirla è sufficiente il comando
+
+\begin{verbatim}
+docker-compose up
+\end{verbatim}
+
+Anche per l'applicazione Wasm è necessario usare Docker Compose, ma solo per il database. Non se ne riporta l'esempio in
+quanto è identico a quello precedentemente a meno della configurazione dell'applicazione NodeJS. Per eseguire
+l'applicazione Wasm è sufficiente il comando
+\begin{verbatim}
+    spin up -f ghcr.io/ilcors-dev/wasi-chat-poc:latest
+\end{verbatim}
+
+che si occupa di eseguire un pull dell'immagine e di eseguirla in locale.
+
 \section{Vantaggi e Svantaggi}
+Come abbiamo visto la soluzione proposta ha rivelato dei vantaggi e degli svantaggi.
 
+La scelta di utilizzare Wasm si è rivelata vincente per quanto riguarda la facilità del deployment mentre ha avuto un
+impatto negativo sulle prestazioni. Questa nota negativa è dovuta sicuramente al fatto che WASI si trova ancora in una
+fase acerba di sviluppo e non è tanto maturo come la controparte NodeJS presa in esame.
 
-\section{Conclusione}
+Si noti inoltre come ogni microservizio dell'applicazione NodeJS dovrà esporre un server HTTP e avere la sua modalità di
+deployment simile a quella illustrata nel paragrafo precedente. Questo non è necessario invece per l'applicazione Wasm in
+quanto Wasmtime e WAGI si occupano dell'esposizione del server HTTP e includono già tutti i microservizi necessari per
+l'esecuzione dell'applicazione.
+
+\section{Sviluppi futuri}
+In futuro sarebbe utile effettuare i test dell'applicazione in ambiente orchestrato tramite Kubernetes. In questo modo
+si potrebbero testare gli start time dei microservizi Wasm e valutarne la differenza con start time della stessa
+applicazione scritta in NodeJS.
