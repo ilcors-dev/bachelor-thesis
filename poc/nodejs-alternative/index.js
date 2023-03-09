@@ -6,15 +6,12 @@ const { ulid } = require("ulid");
 const app = express();
 app.use(express.json());
 
-// create mysql connection
-const connection = mysql.createConnection({
+const pool = mysql.createPool({
     host: '127.0.0.1',
     user: 'root',
     password: 'bachelor',
     database: 'wasi-chat'
-})
-
-connection.connect()
+});
 
 // start express server on port 3000
 app.listen(3000, () => {
@@ -25,48 +22,69 @@ app.listen(3000, () => {
 app.post('/api/messages', (req, res) => {
     var text = req.body.text;
 
-    connection.query(
-        'INSERT INTO messages (ulid, text) VALUES (?, ?)', [ulid(), text],
-        (error, results, fields) => {
-            if (error) {
-                throw error;
-            }
+    pool.getConnection((err, connection) => {
+        if (err) {
+            throw err;
         }
-    );
 
-    console.log("inserted message");
+        connection.query(
+            'INSERT INTO messages (ulid, text) VALUES (?, ?)', [ulid(), text],
+            (error, results, fields) => {
+                if (error) {
+                    throw error;
+                }
+            }
+        );
 
-    res.status(201).send();
+        console.log("inserted message");
+
+        res.status(201).send();
+
+        connection.release();
+    });
 });
 
 // read message by id
 app.get('/api/messages/:id', (req, res) => {
     var id = req.params.id;
 
-    connection.query(
-        'SELECT * FROM messages WHERE id = ?', [id],
-        (error, results, fields) => {
-            if (error) {
-                throw error;
-            }
-
-            res.send(results);
+    pool.getConnection((err, connection) => {
+        if (err) {
+            throw err;
         }
-    );
+
+        connection.query(
+            'SELECT * FROM messages WHERE id = ?', [id],
+            (error, results, fields) => {
+                if (error) {
+                    throw error;
+                }
+
+                res.send(results);
+            }
+        );
+    });
 });
 
 // get the last 10 messages from the database
 app.get('/api/messages', (req, res) => {
-    connection.query(
-        'SELECT * FROM messages ORDER BY id DESC LIMIT 10',
-        (error, results, fields) => {
-            if (error) {
-                throw error;
-            }
 
-            res.send(results);
+    pool.getConnection((err, connection) => {
+        if (err) {
+            throw err;
         }
-    );
+
+        connection.query(
+            'SELECT * FROM messages ORDER BY id DESC LIMIT 10',
+            (error, results, fields) => {
+                if (error) {
+                    throw error;
+                }
+
+                res.send(results);
+            }
+        );
+    });
 });
 
 // update a message
@@ -74,34 +92,46 @@ app.put('/api/messages', (req, res) => {
     var id = req.body.id;
     var text = req.body.text;
 
-    connection.query(
-        'UPDATE messages SET text = ? WHERE id = ?', [text, id],
-        (error, results, fields) => {
-            if (error) {
-                throw error;
-            }
+    pool.getConnection((err, connection) => {
+        if (err) {
+            throw err;
         }
-    );
 
-    console.log("updated message");
+        connection.query(
+            'UPDATE messages SET text = ? WHERE id = ?', [text, id],
+            (error, results, fields) => {
+                if (error) {
+                    throw error;
+                }
+            }
+        );
 
-    res.status(201).send();
+        console.log("updated message");
+
+        res.status(201).send();
+    });
 });
 
 // delete a message
 app.delete('/api/messages', (req, res) => {
     var id = req.body.id;
 
-    connection.query(
-        'DELETE FROM messages WHERE id = ?', [id],
-        (error, results, fields) => {
-            if (error) {
-                throw error;
-            }
+    pool.getConnection((err, connection) => {
+        if (err) {
+            throw err;
         }
-    );
 
-    console.log("deleted message");
+        connection.query(
+            'DELETE FROM messages WHERE id = ?', [id],
+            (error, results, fields) => {
+                if (error) {
+                    throw error;
+                }
+            }
+        );
 
-    res.status(201).send();
+        console.log("deleted message");
+
+        res.status(201).send();
+    });
 });
