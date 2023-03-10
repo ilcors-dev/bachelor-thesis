@@ -1,7 +1,10 @@
 #!/bin/bash
 
+# chats tests, depends on session
+
 pwd=$(pwd)
 
+# truncate the database before running the tests
 /bin/bash "$pwd"/truncator.sh
 session=$(/bin/bash "$pwd"/seeders/session_seeder.sh)
 

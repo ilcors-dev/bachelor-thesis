@@ -2,10 +2,10 @@
 CREATE TABLE
     chats (
         id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        created_by BIGINT UNSIGNED,
         ulid CHAR(26),
         name VARCHAR(255),
         description LONGTEXT,
-        created_by BIGINT UNSIGNED,
         -- a date string, note that this is not the appropriate data type for a date, but the MySQL driver for WASI & Rust doesn't support the date type
         created_at VARCHAR(255),
         updated_at VARCHAR(255)

@@ -1,90 +1,112 @@
 #!/bin/bash
 
+# messages tests, depends on session and chat
+
 pwd=$(pwd)
 
+# truncate the database before running the tests
 /bin/bash "$pwd"/truncator.sh
-session=$(/bin/bash "$pwd"/seeders/session_seeder.sh)
-chat=$(/bin/bash "$pwd"/seeders/chat_seeder.sh)
+chat_and_session=$(/bin/bash "$pwd"/seeders/chat_seeder.sh "$pwd"/seeders)
+chat=$(echo "$chat_and_session" | cut -d '-' -f 1)
+session=$(echo "$chat_and_session" | cut -d '-' -f 2)
 
 scheme="http"
 host="127.0.0.1:3000"
 
-echo "Creating a chat with name (201)"
-curl -s -o /dev/null -w "%{http_code}" -X POST $scheme://$host/api/chats \
+echo "Creating a message in chat (201)"
+r=$(curl -s -o /dev/null -w "%{http_code}" -X POST $scheme://$host/api/messages \
     -H 'Content-Type: application/json' \
     -H 'session_id: '"$session"'' \
-    -d '{ "name": "test" }'
-echo
+    -d '{ "chat_id": '"$chat"', "text": "test" }')
+[[ "$r" == "201" ]] && echo "OK" || echo "FAIL received $r"
 
-echo "Creating a chat with description (201)"
-curl -s -o /dev/null -w "%{http_code}" -X POST $scheme://$host/api/chats \
+echo "Creating a message in chat without session (401)"
+r=$(curl -s -o /dev/null -w "%{http_code}" -X POST $scheme://$host/api/messages \
+    -H 'Content-Type: application/json' \
+    -d '{ "chat_id": '"$chat"', "text": "test" }')
+[[ "$r" == "401" ]] && echo "OK" || echo "FAIL received $r"
+
+echo "Creating a message in chat without text (400)"
+r=$(curl -s -o /dev/null -w "%{http_code}" -X POST $scheme://$host/api/messages \
     -H 'Content-Type: application/json' \
     -H 'session_id: '"$session"'' \
-    -d '{ "name": "test", "description": "test" }'
-echo
+    -d '{ "chat_id": '"$chat"' }')
+[[ "$r" == "400" ]] && echo "OK" || echo "FAIL received $r"
 
-echo "Creating a chat without description (201)"
-curl -s -o /dev/null -w "%{http_code}" -X POST $scheme://$host/api/chats \
+echo "Creating a message in chat without chat_id (400)"
+r=$(curl -s -o /dev/null -w "%{http_code}" -X POST $scheme://$host/api/messages \
     -H 'Content-Type: application/json' \
     -H 'session_id: '"$session"'' \
-    -d '{ "name": "test" }'
-echo
+    -d '{ "text": "test" }')
+[[ "$r" == "400" ]] && echo "OK" || echo "FAIL received $r"
 
-echo "Creating a chat without session (401)"
-curl -s -o /dev/null -w "%{http_code}" -X POST $scheme://$host/api/chats \
-    -H 'Content-Type: application/json' \
-    -d '{ "name": "test" }'
-echo
-
-echo "Updating a chat name (200)"
-curl -s -o /dev/null -w "%{http_code}" -X PUT $scheme://$host/api/chats/ \
+echo "Updating a message (200)"
+r=$(curl -s -o /dev/null -w "%{http_code}" -X PUT $scheme://$host/api/messages/ \
     -H 'Content-Type: application/json' \
     -H 'session_id: '"$session"'' \
-    -d '{ "id": 1, "name": "update" }'
-echo
+    -d '{ "id": 1, "text": "update" }')
+[[ "$r" == "200" ]] && echo "OK" || echo "FAIL received $r"
 
-echo "Updating a chat name and description (200)"
-curl -s -o /dev/null -w "%{http_code}" -X PUT $scheme://$host/api/chats/ \
+echo "Updating a message without session (401)"
+r=$(curl -s -o /dev/null -w "%{http_code}" -X PUT $scheme://$host/api/messages/ \
+    -H 'Content-Type: application/json' \
+    -d '{ "id": 1, "text": "update" }')
+[[ "$r" == "401" ]] && echo "OK" || echo "FAIL received $r"
+
+echo "Updating a message without id (400)"
+r=$(curl -s -o /dev/null -w "%{http_code}" -X PUT $scheme://$host/api/messages/ \
     -H 'Content-Type: application/json' \
     -H 'session_id: '"$session"'' \
-    -d '{ "id": 1, "name": "update", "description": "test" }'
-echo
+    -d '{ "text": "update" }')
+[[ "$r" == "400" ]] && echo "OK" || echo "FAIL received $r"
 
-echo "Updating a chat without changing anything (400)"
-curl -s -o /dev/null -w "%{http_code}" -X PUT $scheme://$host/api/chats/ \
+echo "Updating a message without text (400)"
+r=$(curl -s -o /dev/null -w "%{http_code}" -X PUT $scheme://$host/api/messages/ \
     -H 'Content-Type: application/json' \
     -H 'session_id: '"$session"'' \
-    -d '{}'
-echo
+    -d '{ "id": 1 }')
+[[ "$r" == "400" ]] && echo "OK" || echo "FAIL received $r"
 
-echo "Updating a chat without session (401)"
-curl -s -o /dev/null -w "%{http_code}" -X PUT $scheme://$host/api/chats/ \
-    -H 'Content-Type: application/json' \
-    -d '{ "id": 1, "name": "update", "description": "test" }'
-echo
-
-echo "Fetching chats (200)"
-curl -s -o /dev/null -w "%{http_code}" -X GET $scheme://$host/api/chats -H 'session_id: '"$session"''
-echo
-
-# can not update a chat that does not belong
-echo "Updating a chat not belonging to current user (401)"
-curl -v -X POST $scheme://$host/api/chats \
+echo "Updating a message of another user (401)"
+curl -s -o /dev/null -w "%{http_code}" -X POST $scheme://$host/api/messages \
     -H 'Content-Type: application/json' \
     -H 'session_id: '"$session"'' \
-    -d '{ "name": "test" }' &>/dev/null
-curl -s -o /dev/null -w "%{http_code}" -X PUT $scheme://$host/api/chats/ \
+    -d '{ "chat_id": '"$chat"', "text": "test" }' &>/dev/null
+r=$(curl -s -o /dev/null -w "%{http_code}" -X PUT $scheme://$host/api/messages/ \
     -H 'Content-Type: application/json' \
-    -H 'session_id: '"$(/bin/bash "$pwd"/sessions.sh -s)"'' \
-    -d '{ "id": 1, "name": "update", "description": "test" }'
-echo
+    -H 'session_id: '"$(/bin/bash $pwd/seeders/session_seeder.sh -s)"'' \
+    -d '{ "id": 2, "text": "update" }')
+[[ "$r" == "401" ]] && echo "OK" || echo "FAIL received $r"
 
-echo "Deleting a chat (200)"
-curl -s -o /dev/null -w "%{http_code}" -X DELETE $scheme://$host/api/chats/1 \
-    -H 'session_id: '"$session"''
-echo
+echo "Deleting a message (200)"
+r=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE $scheme://$host/api/messages/1 \
+    -H 'session_id: '"$session"'')
+[[ "$r" == "200" ]] && echo "OK" || echo "FAIL received $r"
 
-echo "Deleting a chat not belongin to current user (401)"
-curl -s -o /dev/null -w "%{http_code}" -X DELETE $scheme://$host/api/chats/1 \
-    -H 'session_id: '"$(/bin/bash "$pwd"/sessions.sh -s)"''
-echo
+echo "Deleting a message without session (401)"
+r=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE $scheme://$host/api/messages/1)
+[[ "$r" == "401" ]] && echo "OK" || echo "FAIL received $r"
+
+echo "Deleting a message that does not exist (401)"
+r=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE $scheme://$host/api/messages/12432423 \
+    -H 'session_id: '"$session"'')
+[[ "$r" == "401" ]] && echo "OK" || echo "FAIL received $r"
+
+echo "Deleting a message of another user (401)"
+r=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE $scheme://$host/api/messages/1 \
+    -H 'session_id: '"$(/bin/bash $pwd/seeders/session_seeder.sh -s)"'')
+[[ "$r" == "401" ]] && echo "OK" || echo "FAIL received $r"
+
+echo "Get last messages of chat (200)"
+r=$(curl -s -o /dev/null -w "%{http_code}" -X GET $scheme://$host/api/messages?chat_id=1 \
+    -H 'session_id: '"$session"'')
+[[ "$r" == "200" ]] && echo "OK" || echo "FAIL received $r"
+
+echo "Get last messages of chat starting from a certain message id (200)"
+r=$(curl -s -o /dev/null -w "%{http_code}" -X GET "$scheme://$host/api/messages?chat_id=1&fetch_from_message_id=2" \
+    -H 'session_id: '"$session"'')
+[[ "$r" == "200" ]] && echo "OK" || echo "FAIL received $r"
+
+echo "Get last 10 messages of chat without session (401)"
+r=$(curl -s -o /dev/null -w "%{http_code}" -X GET $scheme://$host/api/messages?chat_id=1)
+[[ "$r" == "401" ]] && echo "OK" || echo "FAIL received $r"

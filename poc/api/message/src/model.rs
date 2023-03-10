@@ -36,6 +36,7 @@ impl CreateMessage {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct UpdateMessage {
+    pub id: u64,
     pub text: String,
 }
 

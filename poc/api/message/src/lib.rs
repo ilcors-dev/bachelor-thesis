@@ -14,16 +14,15 @@ use spin_sdk::{
 };
 use ulid::Ulid;
 use utils::{
-    bad_request, get_column_lookup, get_session_id, internal_server_error, method_not_allowed,
-    no_content, not_found, ok, unauthorized,
+    bad_request, check_user_owns, get_column_lookup, get_session_id, internal_server_error,
+    method_not_allowed, no_content, not_found, ok, unauthorized,
 };
 
 use crate::model::CreateMessage;
 
 enum Api {
     Create(model::CreateMessage),
-    ReadById(u64),
-    GetLatest(u64),
+    GetLatestFromChat(u64, Option<u64>),
     Update(model::UpdateMessage),
     Delete(u64),
     BadRequest,
@@ -49,6 +48,28 @@ fn get_id_from_route(header_value: &HeaderValue) -> Result<Option<u64>, ()> {
     }
 }
 
+fn get_query_param(query: &str, name: &str) -> Result<Option<String>, ()> {
+    let params = query.split('&');
+
+    for param in params {
+        let mut parts = param.split('=');
+
+        let key = parts.next();
+        let value = parts.next();
+
+        match (key, value) {
+            (Some(key), Some(value)) => {
+                if key == name {
+                    return Ok(Some(value.to_string()));
+                }
+            }
+            _ => {}
+        }
+    }
+
+    Ok(None)
+}
+
 #[http_component]
 fn message_service(req: Request) -> Result<Response> {
     let cfg = Config::get();
@@ -63,8 +84,9 @@ fn message_service(req: Request) -> Result<Response> {
         Api::BadRequest => bad_request(),
         Api::MethodNotAllowed => method_not_allowed(),
         Api::Create(model) => handle_create(&cfg.db_url, session, model),
-        Api::ReadById(id) => handle_read_by_id(&cfg.db_url, id),
-        Api::GetLatest(chat_id) => handle_get_latest(&cfg.db_url, session, chat_id),
+        Api::GetLatestFromChat(chat_id, fetch_from_message_id) => {
+            handle_get_latest_from_chat(&cfg.db_url, chat_id, fetch_from_message_id)
+        }
         Api::Update(model) => handle_update(&cfg.db_url, session, model),
         Api::Delete(id) => handle_delete_by_id(&cfg.db_url, session, id),
         _ => not_found(),
@@ -79,11 +101,35 @@ fn api_from_request(req: Request) -> Api {
                 Err(_) => Api::BadRequest,
             }
         }
-        http::Method::GET => match req.headers().get("spin-path-info") {
+        http::Method::GET => match req.uri().query() {
+            Some(query) => {
+                let chat_id = match get_query_param(query, "chat_id") {
+                    Ok(Some(id)) => match id.parse::<u64>() {
+                        Ok(id) => id,
+                        Err(_) => return Api::BadRequest,
+                    },
+                    Ok(None) => return Api::BadRequest,
+                    Err(_) => return Api::BadRequest,
+                };
+
+                let fetch_from_message_id = get_query_param(query, "fetch_from_message_id")
+                    .unwrap_or_else(|_| None)
+                    .and_then(|id| id.parse::<u64>().ok());
+
+                Api::GetLatestFromChat(chat_id, fetch_from_message_id)
+            }
+            None => Api::BadRequest,
+        },
+        http::Method::PUT => {
+            match UpdateMessage::from_bytes(req.body().as_ref().unwrap_or(&Bytes::new())) {
+                Ok(model) => Api::Update(model),
+                Err(_) => Api::BadRequest,
+            }
+        }
+        http::Method::DELETE => match req.headers().get("spin-path-info") {
             None => Api::BadRequest,
             Some(v) => match get_id_from_route(v) {
-                Ok(Some(id)) => Api::ReadById(id),
-                // Ok(None) => Api::ReadAll,
+                Ok(Some(id)) => Api::Delete(id),
                 Ok(None) => Api::NotFound,
                 Err(()) => Api::NotFound,
             },
@@ -93,13 +139,13 @@ fn api_from_request(req: Request) -> Api {
 }
 
 fn handle_create(db_url: &str, session: u64, model: CreateMessage) -> Result<Response> {
+    let chat_id = ParameterValue::Uint64(model.chat_id);
+    let sender_id = ParameterValue::Uint64(session);
     let binding = Ulid::new().to_string();
-    let chat_id = ParameterValue::Uint64(session);
-    let sender_id = ParameterValue::Uint64(model.chat_id);
     let ulid = ParameterValue::Str(&binding.as_str());
     let text = ParameterValue::Str(&model.text.as_str());
 
-    let params = vec![ulid, text];
+    let params = vec![chat_id, sender_id, ulid, text];
 
     mysql::execute(
         db_url,
@@ -113,34 +159,43 @@ fn handle_create(db_url: &str, session: u64, model: CreateMessage) -> Result<Res
         .body(None)?)
 }
 
-fn handle_read_by_id(db_url: &str, id: u64) -> Result<Response> {
-    let params = vec![ParameterValue::Uint64(id)];
+// fn handle_read_by_id(db_url: &str, id: u64) -> Result<Response> {
+//     let params = vec![ParameterValue::Uint64(id)];
 
-    let row_set = mysql::query(
-        db_url,
-        "SELECT id, ulid, text, created_at, updated_at FROM messages WHERE id = ?",
-        &params,
-    )?;
+//     let row_set = mysql::query(
+//         db_url,
+//         "SELECT id, ulid, text, created_at, updated_at FROM messages WHERE id = ?",
+//         &params,
+//     )?;
 
-    let columns = get_column_lookup(&row_set.columns);
+//     let columns = get_column_lookup(&row_set.columns);
 
-    match row_set.rows.first() {
-        Some(row) => {
-            let model = Message::from_row(row, &columns)?;
-            ok(serde_json::to_string(&model)?)
-        }
-        None => not_found(),
-    }
-}
+//     match row_set.rows.first() {
+//         Some(row) => {
+//             let model = Message::from_row(row, &columns)?;
+//             ok(serde_json::to_string(&model)?)
+//         }
+//         None => not_found(),
+//     }
+// }
 
-fn handle_get_latest(db_url: &str, chatId: u64) -> Result<Response> {
-    let params = vec![ParameterValue::Uint64(chatId)];
-
-    let row_set = mysql::query(
-        db_url,
-        "SELECT id, ulid, text, created_at, updated_at FROM messages ORDER BY id DESC LIMIT 10",
-        &params,
-    )?;
+fn handle_get_latest_from_chat(
+    db_url: &str,
+    chat_id: u64,
+    fetch_from_message_id: Option<u64>,
+) -> Result<Response> {
+    let row_set = match fetch_from_message_id {
+        Some(id) => mysql::query(
+            db_url,
+            "SELECT id, ulid, text, created_at, updated_at FROM messages WHERE chat_id = ? AND id > ?",
+            &vec![ParameterValue::Uint64(chat_id), ParameterValue::Uint64(id)],
+        )?,
+        None => mysql::query(
+            db_url,
+            "SELECT id, ulid, text, created_at, updated_at FROM messages WHERE chat_id = ?",
+            &vec![ParameterValue::Uint64(chat_id)],
+        )?,
+    };
 
     let columns = get_column_lookup(&row_set.columns);
 
@@ -154,12 +209,15 @@ fn handle_get_latest(db_url: &str, chatId: u64) -> Result<Response> {
     ok(serde_json::to_string(&models)?)
 }
 
-fn handle_update(db_url: &str, model: UpdateMessage) -> Result<Response> {
-    let binding = Ulid::new().to_string();
-    let ulid = ParameterValue::Str(&binding.as_str());
-    let text = ParameterValue::Str(&model.text.as_str());
+fn handle_update(db_url: &str, session: u64, model: UpdateMessage) -> Result<Response> {
+    if check_user_owns(db_url, session, model.id) == false {
+        return unauthorized();
+    }
 
-    let params = vec![ulid, text];
+    let id = ParameterValue::Uint64(model.id);
+    let text = ParameterValue::Str(&model.text);
+
+    let params = vec![text, id];
 
     mysql::execute(db_url, "UPDATE messages SET text = ? WHERE id = ?", &params)?;
 
@@ -169,7 +227,11 @@ fn handle_update(db_url: &str, model: UpdateMessage) -> Result<Response> {
         .body(None)?)
 }
 
-fn handle_delete_by_id(db_url: &str, id: u64) -> Result<Response> {
+fn handle_delete_by_id(db_url: &str, session: u64, id: u64) -> Result<Response> {
+    if check_user_owns(db_url, session, id) == false {
+        return unauthorized();
+    }
+
     let params = vec![ParameterValue::Uint64(id)];
 
     mysql::execute(db_url, "DELETE FROM messages WHERE id = ?", &params)?;

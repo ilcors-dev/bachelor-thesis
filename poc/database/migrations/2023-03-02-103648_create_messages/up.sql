@@ -2,8 +2,8 @@
 CREATE TABLE
     messages (
         id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        chat_id BIGINT UNSIGNED NOT NULL ON DELETE CASCADE,
-        sender_id BIGINT UNSIGNED NOT NULL ON DELETE SET NULL,
+        chat_id BIGINT UNSIGNED NOT NULL,
+        sender_id BIGINT UNSIGNED NOT NULL,
         ulid CHAR(26),
         text LONGTEXT,
         -- a date string, note that this is not the appropriate data type for a date, but the MySQL driver for WASI & Rust doesn't support the date type
@@ -11,9 +11,9 @@ CREATE TABLE
         updated_at VARCHAR(255)
     );
 
-ALTER TABLE messages ADD FOREIGN KEY (chat_id) REFERENCES chats (id);
+ALTER TABLE messages ADD FOREIGN KEY (chat_id) REFERENCES chats (id) ON DELETE CASCADE;
 
-ALTER TABLE messages ADD FOREIGN KEY (sender_id) REFERENCES sessions (id);
+ALTER TABLE messages ADD FOREIGN KEY (sender_id) REFERENCES sessions (id) ON DELETE CASCADE;
 
 ALTER TABLE messages ADD INDEX (ulid);
 

@@ -1,5 +1,5 @@
 [package]
-name = "chat-service"
+name = "message-service"
 authors = ["ilcors-dev <corsetti.luca28@gmail.com>"]
 description = "Chat REST API"
 version = "0.1.0"

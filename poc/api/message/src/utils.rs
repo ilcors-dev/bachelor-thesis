@@ -88,3 +88,31 @@ pub(crate) fn get_session_id(db_url: &str, req: &Request) -> Option<u64> {
         })
         .flatten()
 }
+
+// Checks if the current user owns the chat.
+pub(crate) fn check_user_owns(db_url: &str, session: u64, model_id: u64) -> bool {
+    let row_set = mysql::query(
+        db_url,
+        "SELECT id, created_by FROM chats WHERE id = ?",
+        &vec![ParameterValue::Uint64(model_id)],
+    );
+
+    match row_set {
+        Ok(row_set) => {
+            let columns = get_column_lookup(&row_set.columns);
+
+            match row_set.rows.first() {
+                Some(row) => {
+                    let created_by = u64::decode(&row[columns["created_by"]]);
+
+                    match created_by {
+                        Ok(created_by) => created_by == session,
+                        Err(_) => false,
+                    }
+                }
+                None => false,
+            }
+        }
+        Err(_) => false,
+    }
+}
