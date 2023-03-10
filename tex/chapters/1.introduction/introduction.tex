@@ -1,0 +1,51 @@
+\chapter*{Introduzione}
+\chaptermark{Introduzione}
+\addcontentsline{toc}{chapter}{Introduzione}
+Negli ultimi decenni, la crescente richiesta di servizi e applicazioni online ha portato ad un'esplosione dello sviluppo
+delle tecnologie web. Questo cambiamento è stato reso possibile dall'aumento dell'ubiquità dei dispositivi connessi a
+Internet, che rendono l'accesso ai servizi web sempre più immediato, semplice e alla portata di tutti. Di conseguenza,
+le tecnologie e le applicazioni che garantiscono questi servizi devono essere in grado di rispondere in modo efficiente
+a volumi di dati e utenti sempre maggiori. In questo scenario, il cloud computing rappresenta un elemento essenziale per
+la gestione di applicazioni distribuite, ovvero applicazioni suddivise in più componenti spesso eterogenei, sia per
+composizione che locazione fisica. 
+
+Il cloud computing è un modello di erogazione di servizi che consente di gestire l'infrastruttura informatica necessaria
+per rendere disponibili applicazioni, dati e servizi online in modo rapido, efficiente e flessibile. Grazie al cloud
+computing, le risorse informatiche come server, storage e software possono essere facilmente scalate per rispondere alle
+esigenze delle organizzazioni e degli utenti finali, consentendo un accesso sicuro e veloce ai servizi e alle
+applicazioni da qualsiasi dispositivo connesso a Internet. La rapidità e velocità con cui il cloud computing eroga
+questi servizi è data dalle tecnologie che lo compongono. \\
+In questo contesto andremo a discutere di una emergente tecnologia, chiamata \textbf{WASI (WebAssembly System
+Interface)}\footnote{\url{https://wasi.dev/}} e come questa possa essere considerata la terza ondata del cloud
+computing\cite{cloudcomputing-thirdwave}. Grazie a WASI, è possibile eseguire applicazioni in un ambiente isolato e
+sicuro, senza la necessità di dover conoscere il sistema operativo sottostante. È stato progettato per essere altamente
+portabile, consentendo alle applicazioni di essere eseguite in modo efficiente su qualsiasi piattaforma. \\
+Nasce e si sviluppa sopra ad una tecnologia già esistente: \textbf{WebAssembly} (o \textbf{Wasm}). Quest'ultima è
+un'innovativa tecnologia nata con l'obiettivo di migliorare le prestazioni delle applicazioni web \textbf{sul browser}.
+È stata progettata con l'intento di superare le limitazioni poste da Javascript. In particolare, si propone di essere
+veloce, efficiente e portabile, oltre che retro-compatibile con le tecnologie già esistenti. Va notato che WebAssembly
+non è pensato per sostituire JavaScript, ma piuttosto per migliorare le aree in cui quest'ultimo presenta alcune lacune:
+come il rendering 3D, il video editing, giochi in-browser e così via. \\
+WASI eredita tutte queste caratteristiche da Wasm e le utilizza per lo sviluppo di applicazioni \textbf{al di fuori} dei
+browser. \\\\
+Di seguito andremo ad approfondire WASI ed esporremo come rappresenti una tecnologia estremamente promettente per il
+futuro nell'ambito del cloud computing. Si partirà affrontando l'argomento da un punto di vista generale, andando a
+definire le motivazioni storiche che hanno portato alla sua ideazione, il suo funzionamento e lo stato dell'arte della
+tecnologia. Lo si metterà a confronto con le soluzioni esistenti, in particolare affrontando le sue principali
+somiglianze e differenze con il modello a container, estremamente popolare al giorno d'oggi e con il suo predecessore,
+le macchine virtuali. Si studieranno le principali caratteristiche ereditate  da Wasm ponendo particolare attenzione
+alla loro implementazione fuori dal browser da un punto di vista tecnico. Tra queste caratteristiche ritroviamo:
+\begin{itemize}
+    \item \textbf{efficienza}, dato il suo formato binario di piccole dimensioni, simile al linguaggio macchina
+    \item \textbf{portabilità}, grazie alla possibilità di essere eseguito su molteplici sistemi e architetture allo
+    stesso modo mediante applicazioni dette runtime simili, per funzionamento, alla JVM di Java.
+    \item \textbf{interoperabilità}, grazie al fatto che non è strettamente legato ad alcun linguaggio di programmazione
+    specifico
+    \item \textbf{sicurezza}, in quanto eseguito in ambiente sandbox secondo il modello capability-based
+\end{itemize}
+
+La spiegazione teorica sul funzionamento e sui vantaggi sfocerà in un'implementazione di un piccolo prototipo scritto in
+linguaggio Rust basato su un'architettura a microservizi REST API in cui si andranno a mettere in pratica i concetti
+visti in precedenza. Si andrà a valutare il deployment dell'applicazione e ad effettuare benchmark per valutarne i tempi
+di risposta a livelli di carico differenti per simularne un caso d'uso reale. I risultati ottenuti saranno messi a
+confronto con un'applicazione che propone le stesse funzionalità ma implementata con una diversa tecnologia.

@@ -1,30 +1,5 @@
 \chapter{WebAssembly fuori dal browser}
 \chaptermark{WebAssembly fuori dal browser}
-\label{chap:introduction}
-
-Il cloud computing è un modello di erogazione di servizi che consente di gestire l'infrastruttura informatica necessaria
-per rendere disponibili applicazioni, dati e servizi online in modo rapido, efficiente e flessibile. Grazie al cloud
-computing, le risorse informatiche come server, storage e software possono essere facilmente scalate per rispondere alle
-esigenze delle organizzazioni e degli utenti finali, consentendo un accesso sicuro e veloce ai servizi e alle
-applicazioni da qualsiasi dispositivo connesso a Internet. La rapidità e velocità con cui il cloud computing eroga
-questi servizi è data dalle tecnologie che lo compongono. \\
-In questo contesto andremo a discutere di una emergente tecnologia, chiamata \textbf{WASI (WebAssembly System
-Interface)}\footnote{\url{https://wasi.dev/}} e come questa possa essere considerata la terza ondata del cloud
-computing\cite{cloudcomputing-thirdwave}. Grazie a WASI, è possibile eseguire applicazioni in un ambiente isolato e
-sicuro, senza la necessità di dover conoscere il sistema operativo sottostante. È stato progettato per essere altamente
-portabile, consentendo alle applicazioni di essere eseguite in modo efficiente su qualsiasi piattaforma. \\
-Nasce e si sviluppa sopra ad una tecnologia già esistente: \textbf{WebAssembly} (o \textbf{Wasm}). Quest'ultima è
-un'innovativa tecnologia nata con l'obiettivo di migliorare le prestazioni delle applicazioni web \textbf{sul browser}.
-È stata progettata con l'intento di superare le limitazioni poste da Javascript. In particolare, si propone di essere
-veloce, efficiente e portabile, oltre che retro-compatibile con le tecnologie già esistenti. Va notato che WebAssembly
-non è pensato per sostituire JavaScript, ma piuttosto per migliorare le aree in cui quest'ultimo presenta alcune lacune:
-come il rendering 3D, il video editing, giochi in-browser e così via. \\\\
-WASI eredita tutte queste caratteristiche da Wasm e le utilizza per lo sviluppo di applicazioni \textbf{al di fuori} dei
-browser. \\\\
-Di seguito andremo ad approfondire WASI ed esporremo come rappresenti una tecnologia estremamente promettente per il
-futuro nell'ambito del cloud computing in particolare, sebbene sia ancora in fase di sviluppo e di adozione.
-
-\clearpage
 
 \section{Un focus su WebAssembly}
 \label{sec:webassembly}
