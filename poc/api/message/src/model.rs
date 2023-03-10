@@ -23,6 +23,7 @@ fn as_nullable_param<'a>(value: &'a Option<String>) -> ParameterValue<'a> {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct CreateMessage {
+    pub chat_id: u64,
     pub text: String,
 }
 

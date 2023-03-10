@@ -14,8 +14,8 @@ use spin_sdk::{
 };
 use ulid::Ulid;
 use utils::{
-    bad_request, get_column_lookup, internal_server_error, method_not_allowed, no_content,
-    not_found, ok,
+    bad_request, get_column_lookup, get_session_id, internal_server_error, method_not_allowed,
+    no_content, not_found, ok, unauthorized,
 };
 
 use crate::model::CreateMessage;
@@ -53,14 +53,20 @@ fn get_id_from_route(header_value: &HeaderValue) -> Result<Option<u64>, ()> {
 fn message_service(req: Request) -> Result<Response> {
     let cfg = Config::get();
 
+    let session = get_session_id(&cfg.db_url, &req).unwrap_or_else(|| 0);
+
+    if session == 0 {
+        return unauthorized();
+    }
+
     match api_from_request(req) {
         Api::BadRequest => bad_request(),
         Api::MethodNotAllowed => method_not_allowed(),
-        Api::Create(model) => handle_create(&cfg.db_url, model),
+        Api::Create(model) => handle_create(&cfg.db_url, session, model),
         Api::ReadById(id) => handle_read_by_id(&cfg.db_url, id),
-        Api::GetLatest(chat_id) => handle_get_latest(&cfg.db_url, chat_id),
-        Api::Update(model) => handle_update(&cfg.db_url, model),
-        Api::Delete(id) => handle_delete_by_id(&cfg.db_url, id),
+        Api::GetLatest(chat_id) => handle_get_latest(&cfg.db_url, session, chat_id),
+        Api::Update(model) => handle_update(&cfg.db_url, session, model),
+        Api::Delete(id) => handle_delete_by_id(&cfg.db_url, session, id),
         _ => not_found(),
     }
 }
@@ -86,8 +92,10 @@ fn api_from_request(req: Request) -> Api {
     }
 }
 
-fn handle_create(db_url: &str, model: CreateMessage) -> Result<Response> {
+fn handle_create(db_url: &str, session: u64, model: CreateMessage) -> Result<Response> {
     let binding = Ulid::new().to_string();
+    let chat_id = ParameterValue::Uint64(session);
+    let sender_id = ParameterValue::Uint64(model.chat_id);
     let ulid = ParameterValue::Str(&binding.as_str());
     let text = ParameterValue::Str(&model.text.as_str());
 
@@ -95,7 +103,7 @@ fn handle_create(db_url: &str, model: CreateMessage) -> Result<Response> {
 
     mysql::execute(
         db_url,
-        "INSERT INTO messages (ulid, text) VALUES (?, ?)",
+        "INSERT INTO messages (chat_id, sender_id, ulid, text) VALUES (?, ?, ?, ?)",
         &params,
     )?;
 
