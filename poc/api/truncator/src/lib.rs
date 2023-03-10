@@ -38,15 +38,17 @@ fn api_from_request(req: Request) -> Api {
 fn handle_truncate(db_url: &str, db_name: &str) -> Result<Response> {
     mysql::execute(db_url, "SET FOREIGN_KEY_CHECKS=0;", &[])?;
 
-    let messages = format!("TRUNCATE TABLE messages");
-    let chats = format!("TRUNCATE TABLE chats");
-    let sessions = format!("TRUNCATE TABLE sessions");
+    let messages = format!("TRUNCATE TABLE messages;");
+    let chats = format!("TRUNCATE TABLE chats;");
+    let sessions = format!("TRUNCATE TABLE sessions;");
 
     mysql::execute(db_url, &messages, &[])?;
     mysql::execute(db_url, &chats, &[])?;
     mysql::execute(db_url, &sessions, &[])?;
 
     mysql::execute(db_url, "SET FOREIGN_KEY_CHECKS=1;", &[])?;
+
+    println!("Truncated tables in database: {}", db_name);
 
     Ok(http::Response::builder()
         .status(http::StatusCode::CREATED)
