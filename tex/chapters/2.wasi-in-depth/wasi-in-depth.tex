@@ -127,13 +127,15 @@ ottimizzazione, LLVM genera codice macchina per l'architettura di destinazione.
 
 \subsection{La differenza}
 La differenza principale tra Cranelift e LLVM è nel modo in cui gestiscono l'IR intermedio durante il processo di
-compilazione. Cranelift utilizza due IR intermedi, il CLIF, che è stato progettato specificamente per la compilazione di
-WebAssembly e il VCode. Invece, LLVM utilizza il suo proprio IR intermedio, che è stato progettato per essere utilizzato
-con una vasta gamma di linguaggi di programmazione. Inoltre, mentre Cranelift è stato progettato specificamente per
-WebAssembly e supporta solo alcune architetture, LLVM è stato progettato per supportare diverse architetture di
-destinazione, tra cui x86, ARM, MIPS, PowerPC, RISC-V e altre. Ciò significa che LLVM può essere utilizzato per
-compilare codice sorgente in una vasta gamma di linguaggi di programmazione per diverse architetture di destinazione,
-mentre Cranelift è specificamente progettato per compilare codice WebAssembly in alcune architetture specifiche.
+compilazione. Cranelift utilizza due IR, il CLIF, che è stato progettato specificamente per la compilazione di
+WebAssembly e il VCode. Invece, LLVM utilizza il suo proprio IR, che è stato progettato per essere utilizzato con una
+vasta gamma di linguaggi di programmazione. Inoltre, mentre Cranelift è stato progettato specificamente per WebAssembly
+e supporta solo alcune architetture, LLVM è stato progettato per supportare diverse architetture di destinazione, tra
+cui x86, ARM, MIPS, PowerPC, RISC-V e altre. Ciò significa che LLVM può essere utilizzato per compilare codice sorgente
+in una vasta gamma di linguaggi di programmazione per diverse architetture di destinazione, mentre Cranelift è
+specificamente progettato per compilare codice WebAssembly in alcune architetture specifiche. Il risultante eseguibile
+prodotto dalle due soluzioni è differente sia a livello di struttura che di
+performance\cite{how-far-weve-come-wasm-compilers} a causa delle diverse operazioni eseguite dai due compilatori.
 
 \begin{figure}[H]
     \centering
@@ -161,8 +163,8 @@ maggior parte dei casi, i linguaggi interpretati possono essere usati per produr
 \end{figure}
 
 % \section{Il component based model} Al momento della scrittura del documento, diverse interfacce di WASI stanno
-% emergendo. Tutte si basano sul WASI-core definito in precedenza e seguono un modello di sviluppo chiamato component base
-% model. Il component base model
+% emergendo. Tutte si basano sul WASI-core definito in precedenza e seguono un modello di sviluppo chiamato component
+% base model. Il component base model
 
 \section{La gestione delle risorse}
 Dopo aver compreso che Wasm è un formato binario di esecuzione compilato da qualsiasi linguaggio di programmazione che
@@ -261,13 +263,13 @@ che in alcuni contesti possono coesistere come vedremo nel terzo capitolo del do
 
 \subsection{Uno use case: i microservizi con Wasm}
 \subsubsection{Il problema}
-Consideriamo ora Wasm in uno scenario reale: quello dei microservizi\cite{a-way-to-rethink-microservices} riprendendo
-la spiegazione fornita riguardante la sicurezza in WASI. Nella costruzione di un applicazione è ormai la norma
-utilizzare codice scaricato da internet attraverso i package manager. Questo può causare non pochi problemi di
-sicurezza, soprattutto se si tiene conto del fatto che ogni pacchetto richiede a sua volta altre dipendenze per
-funzionare. Prendiamo come esempio NodeJS, dove per creare un'applicazione ad architettura a microservizi, potremmo
-utilizzare il framework ExpressJS per aggiungere le funzionalità necessarie, come il routing, il middleware, la gestione
-dei file, l'integrazione dei database, e così via. Tuttavia, questo significherebbe anche installare tutte le dipendenze
+Consideriamo ora Wasm in uno scenario reale: quello dei microservizi\cite{a-way-to-rethink-microservices} riprendendo la
+spiegazione fornita riguardante la sicurezza in WASI. Nella costruzione di un applicazione è ormai la norma utilizzare
+codice scaricato da internet attraverso i package manager. Questo può causare non pochi problemi di sicurezza,
+soprattutto se si tiene conto del fatto che ogni pacchetto richiede a sua volta altre dipendenze per funzionare.
+Prendiamo come esempio NodeJS, dove per creare un'applicazione ad architettura a microservizi, potremmo utilizzare il
+framework ExpressJS per aggiungere le funzionalità necessarie, come il routing, il middleware, la gestione dei file,
+l'integrazione dei database, e così via. Tuttavia, questo significherebbe anche installare tutte le dipendenze
 utilizzate da ExpressJS, che potrebbero essere circa un centinaio. Prima di iniziare a scrivere una sola riga di codice
 avremmo già importato migliaia di altre righe di codice che potrebbero presentare vulnerabilità. Poi, per eseguire il
 nostro servizio, avremmo bisogno di un server HTTP che andrebbe eseguito per ogni microservizio e che avrebbe bisogno di
@@ -333,8 +335,7 @@ fosse inserito codice malevolo o codice vulnerabile? Purtroppo non è uno scenar
     \textit{Snyk 2022 State of Open Source Security Report}\cite{snyk-2022-open-source-security}
 \end{quote}
 Per peggiorare le cose, non tutte queste vulnerabilità vengono risolte, si stima che solo il 59\% dei pacchetti software
-risolva le vulnerabilità trovate e in media ci impieghi circa 110
-giorni\cite{snyk-2022-open-source-security}.
+risolva le vulnerabilità trovate e in media ci impieghi circa 110 giorni\cite{snyk-2022-open-source-security}.
 % \footnote{\url{https://snyk.io/reports/open-source-security\#Open-source-vulnerabilities-are-becoming-harder-to-fix}}.
 \begin{figure}[h]
     \centering
