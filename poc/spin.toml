@@ -12,6 +12,19 @@ db_host = { default = "127.0.0.1" }
 db_name = { default = "wasi-chat" }
 
 [[component]]
+id = "session-service"
+source = "api/session/target/wasm32-wasi/release/session_service.wasm"
+allowed_http_hosts = []
+[component.trigger]
+route = "/api/sessions/..."
+[component.build]
+command = "cargo build --target wasm32-wasi --release"
+workdir = "api/session"
+
+[component.config]
+db_url = "mysql://{{db_user}}:{{db_pswd}}@{{db_host}}/{{db_name}}"
+
+[[component]]
 id = "message-service"
 source = "api/message/target/wasm32-wasi/release/message_service.wasm"
 allowed_http_hosts = []
@@ -20,6 +33,36 @@ route = "/api/messages/..."
 [component.build]
 command = "cargo build --target wasm32-wasi --release"
 workdir = "api/message"
+
+# [[component]]
+# id = "chat-service"
+# source = "api/chat/target/wasm32-wasi/release/chat_service.wasm"
+# allowed_http_hosts = []
+# [component.trigger]
+# route = "/api/chats/..."
+# [component.build]
+# command = "cargo build --target wasm32-wasi --release"
+# workdir = "api/chat"
+
+# [[component]]
+# id = "user-service"
+# source = "api/user/target/wasm32-wasi/release/user_service.wasm"
+# allowed_http_hosts = []
+# [component.trigger]
+# route = "/api/users/..."
+# [component.build]
+# command = "cargo build --target wasm32-wasi --release"
+# workdir = "api/user"
+
+# [[component]]
+# id = "frontend-service"
+# source = "api/frontend/target/wasm32-wasi/release/frontend_service.wasm"
+# allowed_http_hosts = []
+# [component.trigger]
+# route = "/api/frontends/..."
+# [component.build]
+# command = "cargo build --target wasm32-wasi --release"
+# workdir = "api/frontend"
 
 [component.config]
 db_url = "mysql://{{db_user}}:{{db_pswd}}@{{db_host}}/{{db_name}}"

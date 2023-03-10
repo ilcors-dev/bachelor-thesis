@@ -1,1 +1,9 @@
-{}
+{
+    "[rust]": {
+        "editor.defaultFormatter": "rust-lang.rust-analyzer"
+    },
+    "rust-analyzer.linkedProjects": [
+        "poc/api/session/Cargo.toml",
+        "poc/api/message/Cargo.toml",
+    ],
+}
