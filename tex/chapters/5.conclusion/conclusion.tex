@@ -1,23 +1,39 @@
-\chapter{Conclusione}
-\label{chap:conclusion}
-La conclusione della tesi fornisce un giudizio moderatamente positivo sulla tecnologia WASI studiata nel documento.
-Nel corso dell'elaborato sono state analizzate le caratteristiche, i vantaggi e le problematiche teoriche relative a
-questa tecnologia emergente, culminando nella presentazione di un Proof of Concept che ha dimostrato l'effettivo
-funzionamento di Wasm al di fuori del browser.
+\chapter*{Conclusione}
+\chaptermark{Conclusione}
+\addcontentsline{toc}{chapter}{Conclusione}
 
-Nonostante i risultati del PoC non siano stati del tutto soddisfacenti, questo non ha minato la valutazione positiva di WASI. Si è sottolineata la sua grande potenzialità e la possibilità che, data la sua attuale immaturità, i risultati ottenuti possano migliorare notevolmente con lo sviluppo futuro della tecnologia. È importante sottolineare anche che l'ecosistema di WASI è ancora relativamente piccolo, ma sta guadagnando sempre più attenzione tra le aziende del settore cloud, dimostrando ulteriormente il suo valore.
+In un mondo sempre più connesso in cui le applicazioni distribuite sono in costante crescita, la sicurezza, la
+portabilità e l'efficienza sono fattori cruciali. WASI (WebAssembly System Interface) si presenta come uno standard
+emergente del W3C per eseguire applicazioni WebAssembly in ambiente distribuito che potrebbe diventare un tassello
+importante nell'industria informatica, tanto che è definito da alcuni come la terza ondata del cloud computing. Nel
+corso dell'elaborato, è stata condotta un'analisi delle sue caratteristiche, dei suoi vantaggi e delle problematiche
+riscontrate.  
 
-Le caratteristiche principali di WASI:
-\begin{itemize}
-    \item la sicurezza garantita dal modello capability based;
-    \item la portabilità grazie alla sua natura basata su WebAssembly;
-    \item l'efficienza grazie all'uso dei container leggeri;
-\end{itemize}
+Nel primo capitolo del presente lavoro si è collocato WASI all'interno dell'ecosistema delle tecnologie web,
+evidenziando il suo stretto legame con WebAssembly. A tal proposito, si è evidenziata la sua somiglianza al
+linguaggio Java, poiché entrambi condividono il concetto di WORA (Write Once Run Anywhere), e si sono messi in risalto i
+tratti distintivi che li differenziano. In seguito, si è approfondita l'analisi tecnica di WASI, al fine di comprendere
+il suo effettivo funzionamento low-level, se ne è evidenziata la forte predisposizione alla sicurezza basata sul modello
+capability-based e si è analizzata la possibile collocazione della tecnologia in ambiente distribuito, focalizzandosi in
+particolare sulla sua natura di container leggero, sulle differenze con i container classici e le Virtual Machine.
+L'analisi tecnica condotta ha permesso di sviluppare un Proof of Concept che ha dimostrato l'effettiva realizzabilità di
+applicazioni WebAssembly in ambiente distribuito, nonostante queste siano state originariamente pensate per essere
+eseguite soltanto all'interno del browser.
 
-sono state evidenziate come i principali vantaggi della tecnologia. Questi fattori, insieme alla possibilità di eseguire
-codice in modo isolato e sicuro, rendono WASI una valida alternativa alle soluzioni esistenti, spesso basate su
-container virtualizzati.
+Il Proof of Concept è stato sviluppato utilizzando Spin, uno dei primi framework presenti nell'ecosistema, facendo uso
+di WAGI, un'implementazione delle CGI per WebAssembly e strutturando l'applicazione secondo il modello a microservizi.
+Se ne è dimostrata la complementarità con Docker e il processo di deployment tramite container OCI. Successivamente,
+durante la fase di valutazione, si è confrontato il progetto con un'applicazione simile sviluppata in NodeJS. Questo
+confronto ha evidenziato la natura ancora acerba di WASI rispetto alle soluzioni esistenti in termini di prestazioni ma
+ne ha evidenziato la grande differenza per quanto riguarda la portabilità e la facilità di deployment. Nonostante i
+risultati del PoC non siano stati completamente soddisfacenti, la valutazione di WASI rimane positiva in quanto la
+tecnologia presenta un grande potenziale che potrebbe essere migliorato ulteriormente con lo sviluppo futuro. È
+importante sottolineare che WASI è ancora in fase di sviluppo, molte funzionalità cruciali come il networking, il
+supporto ai thread e così via sono ancora in fase di discussione e, in quanto standard, sta impiegando del tempo per
+essere sviluppato. Il fatto di essere uno standard W3C ne garantisce la stabilità a lungo termine ma sta obbligando
+alcune realtà esistenti a implementare soluzioni custom per conseguire i risultati desiderati nel breve termine.
 
-Inoltre, è importante notare che l'utilizzo di WASI potrebbe offrire significative opportunità per lo sviluppo di
-applicazioni distribuite e scalabili, grazie alla sua portabilità e alla sua capacità di eseguire codice in ambienti
-diversi.
+In conclusione, la sicurezza garantita dal modello capability based, la portabilità grazie alla natura basata su
+WebAssembly e l'efficienza grazie all'uso dei container leggeri sono i principali vantaggi di WASI. Questi fattori,
+insieme alla possibilità di eseguire codice in modo isolato e sicuro all'interno di una sandbox, possono rendere WASI
+una valida opportunità futura per lo sviluppo di applicazioni in ambiente distribuito.
