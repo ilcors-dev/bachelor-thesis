@@ -1,11 +1,14 @@
 import autoAnimate from '@formkit/auto-animate';
 import { MutableRefObject, useEffect, useRef } from 'react';
 import { useQuery } from 'react-query';
-import { Message } from './Message';
-import { MessageInput } from './MessageInput';
-import { MessageLoading } from './MessageLoading';
+import { useParams } from 'react-router-dom';
+import { Message } from '../components/Message';
+import { MessageInput } from '../components/MessageInput';
+import { MessageLoading } from '../components/MessageLoading';
 
 export const Chat = () => {
+	const { chatId } = useParams<{ chatId: string }>();
+
 	const messagesContainer = useRef(null);
 	const bottomRef = useRef(null);
 
