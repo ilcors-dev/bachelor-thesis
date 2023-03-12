@@ -2,19 +2,16 @@ mod config;
 mod model;
 mod utils;
 
+use std::collections::HashMap;
+
 use anyhow::{anyhow, Result};
-use bytes::Bytes;
 use config::Config;
-use http::HeaderValue;
-use model::{Session, Store};
+use model::Session;
 use spin_sdk::{
     http::{Request, Response},
     http_component, redis,
 };
-use utils::{
-    bad_request, check_user_owns, get_column_lookup, get_session_id, internal_server_error,
-    method_not_allowed, not_found, ok, unauthorized,
-};
+use utils::{bad_request, get_session_id, method_not_allowed, not_found, unauthorized};
 
 enum Api {
     Create,
@@ -51,46 +48,76 @@ fn api_from_request(req: Request) -> Api {
     }
 }
 
-fn handle_create(redis_url: &str, session_id: u64) -> Result<Response> {
-    let store = redis::get(&redis_url, "sessions");
+/// Removes expired sessions from the store
+///
+/// Sessions are considered expired if they have not been active for x minutes
+///
+/// The store is modified by reference!
+fn remove_expired_sessions(store: &mut HashMap<u64, Session>) {
+    let now = chrono::Local::now().naive_utc();
 
-    let mut store: Store = match store {
-        Ok(store) => {
-            let json = String::from_utf8(store).map_err(|_| anyhow!("Deserialize Error"))?;
+    let mut expired = Vec::new();
 
-            serde_json::from_str(&json).map_err(|_| anyhow!("Json conversion error"))?
+    for (id, session) in store.iter() {
+        if now - session.last_active > chrono::Duration::minutes(2) {
+            expired.push(*id);
         }
-        Err(_) => Store { sessions: vec![] },
+    }
+
+    for id in expired {
+        store.remove(&id);
+    }
+}
+
+/// Get the sessions from redis stored in a json containing multiple Session structs
+///
+/// If error, return an empty HashMap
+fn get_store(redis_url: &str) -> Result<HashMap<u64, Session>> {
+    let cached = redis::get(&redis_url, "sessions");
+
+    let mut store: HashMap<u64, Session> = match cached {
+        Ok(store) => {
+            if store.len() == 0 {
+                HashMap::new()
+            } else {
+                let json = String::from_utf8(store).map_err(|_| anyhow!("Deserialize Error"))?;
+
+                let store: HashMap<u64, Session> =
+                    serde_json::from_str(&json).map_err(|_| anyhow!("Redis Error"))?;
+
+                store
+            }
+        }
+        Err(_) => HashMap::new(),
     };
 
-    store.sessions.push(Session {
-        session_id,
-        last_active: chrono::Utc::now().naive_utc(),
-    });
+    Ok(store)
+}
 
-    println!("store: {:?}", store);
+fn handle_create(redis_url: &str, session_id: u64) -> Result<Response> {
+    let mut store = get_store(redis_url)?;
+
+    let session = Session {
+        session_id,
+        last_active: chrono::Local::now().naive_utc(),
+    };
+
+    store.insert(session_id, session);
+
+    // remove expired sessions
+    remove_expired_sessions(&mut store);
 
     let json = serde_json::to_string(&store).map_err(|_| anyhow!("Serialize Error"))?;
 
-    println!("json: {}", json);
-    redis::set(&redis_url, "sessions", &b"test"[..]).map_err(|_| anyhow!("Redis Error"))?;
+    redis::set(&redis_url, "sessions", json.as_bytes()).map_err(|_| anyhow!("Redis Error"))?;
 
     Ok(http::Response::builder()
         .status(http::StatusCode::OK)
         .body(Some(serde_json::to_string(&store)?.into()))?)
 }
 
-fn handle_get(db_url: &str) -> Result<Response> {
-    // get the sessions from redis stored in a json containing multiple Session structs
-    // store the session_id in redis in a Session struct with the current time
-
-    let store = redis::get(&db_url, "sessions").map_err(|_| anyhow!("Redis Error"))?;
-
-    let json = String::from_utf8(store).map_err(|_| anyhow!("Deserialize Error"))?;
-
-    let store: Store = serde_json::from_str(&json).map_err(|_| anyhow!("Redis Error"))?;
-
+fn handle_get(redis_url: &str) -> Result<Response> {
     Ok(http::Response::builder()
         .status(http::StatusCode::OK)
-        .body(Some(serde_json::to_string(&store)?.into()))?)
+        .body(Some(serde_json::to_string(&get_store(redis_url)?)?.into()))?)
 }
