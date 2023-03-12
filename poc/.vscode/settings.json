@@ -7,5 +7,6 @@
         "api/message/Cargo.toml",
         "api/chat/Cargo.toml",
         "api/truncator/Cargo.toml",
+        "api/user/Cargo.toml",
     ],
 }

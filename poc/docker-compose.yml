@@ -8,3 +8,11 @@ services:
       MYSQL_PASSWORD: bachelor
       MYSQL_ROOT_PASSWORD: bachelor
       MYSQL_DATABASE: wasi-chat
+  redis:
+    image: redis:latest
+    restart: always
+    networks:
+      - default
+    ports:
+      - "16785:6379"
+    command: [ "redis-server", "--protected-mode no" ]

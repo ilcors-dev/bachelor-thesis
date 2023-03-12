@@ -10,6 +10,8 @@ db_user = { default = "bachelor" }
 db_pswd = { default = "bachelor" }
 db_host = { default = "127.0.0.1" }
 db_name = { default = "wasi-chat" }
+redis_host = { default = "127.0.0.1" }
+redis_port = { default = "16785" }
 
 [[component]]
 id = "session-service"
@@ -64,15 +66,19 @@ workdir = "api/truncator"
 db_url = "mysql://{{db_user}}:{{db_pswd}}@{{db_host}}/{{db_name}}"
 db_name = "{{db_name}}"
 
-# [[component]]
-# id = "user-service"
-# source = "api/user/target/wasm32-wasi/release/user_service.wasm"
-# allowed_http_hosts = []
-# [component.trigger]
-# route = "/api/users/..."
-# [component.build]
-# command = "cargo build --target wasm32-wasi --release"
-# workdir = "api/user"
+[[component]]
+id = "user-service"
+source = "api/user/target/wasm32-wasi/release/user_service.wasm"
+allowed_http_hosts = []
+environment = { REDIS_ADDRESS = "redis://127.0.0.1:16785", REDIS_CHANNEL = "users-online" }
+[component.trigger]
+route = "/api/users/..."
+[component.build]
+command = "cargo build --target wasm32-wasi --release"
+workdir = "api/user"
+
+[component.config]
+db_url = "mysql://{{db_user}}:{{db_pswd}}@{{db_host}}/{{db_name}}"
 
 # [[component]]
 # id = "frontend-service"
