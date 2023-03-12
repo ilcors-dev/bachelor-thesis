@@ -5,7 +5,7 @@
 pwd=$(pwd)
 
 # truncate the database before running the tests
-/bin/bash "$pwd"/truncator.sh
+/bin/bash "$pwd"/utils/truncator.sh
 chat_and_session=$(/bin/bash "$pwd"/seeders/chat_seeder.sh "$pwd"/seeders)
 chat=$(echo "$chat_and_session" | cut -d '-' -f 1)
 session=$(echo "$chat_and_session" | cut -d '-' -f 2)

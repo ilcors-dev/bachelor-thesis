@@ -51,7 +51,7 @@ fn handle_truncate(db_url: &str, db_name: &str) -> Result<Response> {
     println!("Truncated tables in database: {}", db_name);
 
     Ok(http::Response::builder()
-        .status(http::StatusCode::CREATED)
+        .status(http::StatusCode::OK)
         // .header(http::header::LOCATION, format!("/api/message/{}", model.id))
         .body(None)?)
 }

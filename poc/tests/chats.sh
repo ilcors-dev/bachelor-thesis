@@ -5,7 +5,7 @@
 pwd=$(pwd)
 
 # truncate the database before running the tests
-/bin/bash "$pwd"/truncator.sh
+/bin/bash "$pwd"/utils/truncator.sh
 session=$(/bin/bash "$pwd"/seeders/session_seeder.sh)
 
 echo "$session"
