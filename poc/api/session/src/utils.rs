@@ -17,6 +17,13 @@ pub(crate) fn ok(payload: String) -> Result<Response> {
         .body(Some(payload.into()))?)
 }
 
+pub(crate) fn created(payload: String) -> Result<Response> {
+    Ok(http::Response::builder()
+        .status(http::StatusCode::CREATED)
+        .header(http::header::CONTENT_TYPE, "application/json")
+        .body(Some(payload.into()))?)
+}
+
 pub(crate) fn method_not_allowed() -> Result<Response> {
     quick_response(http::StatusCode::METHOD_NOT_ALLOWED)
 }

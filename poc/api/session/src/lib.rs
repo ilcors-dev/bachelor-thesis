@@ -4,13 +4,14 @@ mod utils;
 
 use anyhow::Result;
 use config::Config;
+use model::SelectSession;
 use spin_sdk::{
     http::{Request, Response},
     http_component,
     mysql::{self, ParameterValue},
 };
 use ulid::Ulid;
-use utils::not_found;
+use utils::{created, get_column_lookup, not_found};
 
 enum Api {
     Create,
@@ -45,7 +46,20 @@ fn handle_create(db_url: &str) -> Result<Response> {
         &params,
     )?;
 
-    Ok(http::Response::builder()
-        .status(http::StatusCode::CREATED)
-        .body(Some(session_id.into()))?)
+    let row_set = mysql::query(
+        db_url,
+        "SELECT session_id, expires_at, created_at FROM sessions WHERE session_id = ? LIMIT 1",
+        &params,
+    )?;
+
+    let columns = get_column_lookup(&row_set.columns);
+
+    match row_set.rows.first() {
+        Some(row) => {
+            let model = SelectSession::from_row(row, &columns)?;
+
+            created(serde_json::to_string(&model)?)
+        }
+        None => not_found(),
+    }
 }
