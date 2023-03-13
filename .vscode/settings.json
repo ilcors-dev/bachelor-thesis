@@ -8,5 +8,6 @@
         "poc/api/message/Cargo.toml",
         "poc/api/user/Cargo.toml",
         "poc/api/truncator/Cargo.toml",
+        "poc/api/frontend/Cargo.toml",
     ],
 }
