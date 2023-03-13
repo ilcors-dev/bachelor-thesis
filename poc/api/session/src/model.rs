@@ -9,6 +9,8 @@ use spin_sdk::mysql::{Decode, ParameterValue};
 #[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct SelectSession {
     pub session_id: String,
+    pub name: String,
+    pub emoji: String,
     pub expires_at: NaiveDateTime,
     pub created_at: NaiveDateTime,
 }
@@ -16,6 +18,8 @@ pub(crate) struct SelectSession {
 impl SelectSession {
     pub fn from_row(row: &spin_sdk::mysql::Row, columns: &HashMap<&str, usize>) -> Result<Self> {
         let session_id = String::decode(&row[columns["session_id"]])?;
+        let name = String::decode(&row[columns["name"]])?;
+        let emoji = String::decode(&row[columns["emoji"]])?;
 
         let expires_at = NaiveDateTime::parse_from_str(
             &String::decode(&row[columns["expires_at"]])?,
@@ -29,6 +33,8 @@ impl SelectSession {
 
         Ok(SelectSession {
             session_id,
+            name,
+            emoji,
             expires_at,
             created_at,
         })
@@ -39,6 +45,8 @@ impl SelectSession {
 pub(crate) struct Session {
     pub id: u64,
     pub session_id: String,
+    pub name: Option<String>,
+    pub emoji: Option<String>,
     pub payload: Option<String>,
     pub expires_at: NaiveDateTime,
     pub created_at: NaiveDateTime,
@@ -48,6 +56,8 @@ impl Session {
     pub fn from_row(row: &spin_sdk::mysql::Row, columns: &HashMap<&str, usize>) -> Result<Self> {
         let id = u64::decode(&row[columns["id"]])?;
         let session_id = String::decode(&row[columns["session_id"]])?;
+        let name = String::decode(&row[columns["name"]]).ok();
+        let emoji = String::decode(&row[columns["emoji"]]).ok();
 
         let payload = String::decode(&row[columns["payload"]]).ok();
 
@@ -64,6 +74,8 @@ impl Session {
         Ok(Session {
             id,
             session_id,
+            name,
+            emoji,
             payload,
             expires_at,
             created_at,

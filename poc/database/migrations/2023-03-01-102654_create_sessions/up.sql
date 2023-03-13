@@ -3,6 +3,8 @@ CREATE TABLE
     sessions (
         id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         session_id VARCHAR(255) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        emoji VARCHAR(8) NOT NULL,
         payload TEXT, -- a JSON string
         -- a date string, note that this is not the appropriate data type for a date, but the MySQL driver for WASI & Rust doesn't support the date type
         expires_at VARCHAR(255) NOT NULL,
