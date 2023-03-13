@@ -1,7 +1,9 @@
 import { ArrowRightIcon } from '@heroicons/react/20/solid';
+import axios from 'axios';
 import { Textarea } from 'flowbite-react';
 import { useState } from 'react';
 import { useMutation, useQueryClient } from 'react-query';
+import { useParams } from 'react-router-dom';
 import { InputEmoji } from './InputEmoji';
 
 interface Props {
@@ -9,17 +11,20 @@ interface Props {
 }
 
 export const MessageInput = ({ className }: Props) => {
+	const { chatId } = useParams();
+
 	let client = useQueryClient();
 	const [message, setMessage] = useState<string>('');
 
 	const addMessage = useMutation({
-		mutationFn: async (message: string) =>
-			(
-				await fetch('http://localhost:8080/create_message', {
-					method: 'POST',
-					body: JSON.stringify({ text: message }),
-				})
-			).json(),
+		mutationFn: async (message: string) => {
+			const response = await axios.post('/api/messages', {
+				chat_id: +(chatId ?? 0),
+				text: message,
+			});
+
+			return response.data as Message[];
+		},
 		onSuccess: () => client.invalidateQueries('messages'),
 	});
 
@@ -33,15 +38,15 @@ export const MessageInput = ({ className }: Props) => {
 			className={`${className}`}
 		>
 			<div className="flex space-x-4">
-				<InputEmoji
+				{/* <InputEmoji
 					handleEmojiClick={(emoji) => setMessage(message + emoji.emoji)}
-				/>
+				/> */}
 				<Textarea
 					id="comment"
 					placeholder="Write your thoughts here..."
 					required={true}
 					rows={4}
-					defaultValue={message}
+					value={message}
 					onChange={(e) => setMessage(e.target.value)}
 				/>
 				<button
