@@ -1,3 +1,4 @@
+import axios from 'axios';
 import moment from 'moment';
 
 /**
@@ -25,6 +26,8 @@ const setup = async () => {
 		const session = (await response.json()) as unknown as Session;
 
 		persist(session);
+
+		await axios.post('/api/users');
 
 		return session;
 	} catch (error) {

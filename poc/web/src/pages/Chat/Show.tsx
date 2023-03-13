@@ -6,6 +6,7 @@ import { Navigate, useParams } from 'react-router-dom';
 import { Message } from '../../components/Message';
 import { MessageInput } from '../../components/MessageInput';
 import { MessageLoading } from '../../components/MessageLoading';
+import { OnlineUsers } from '../../components/OnlineUsers';
 
 export const Show = () => {
 	const { chatId } = useParams<{ chatId: string }>();
@@ -91,6 +92,7 @@ export const Show = () => {
 					<MessageInput className="w-full" />
 				</div>
 			</div>
+			<OnlineUsers />
 		</>
 	);
 };

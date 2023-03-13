@@ -26,7 +26,7 @@ export const ChatList = () => {
 		<div>
 			<ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 				{isLoading && <ChatLoading />}
-				{!data && <li>No chats available</li>}
+				{!data && !isLoading && <li>No chats available</li>}
 				{data &&
 					data.map((chat, i) => (
 						<Link key={i} to={`chats/${chat.id}`} className="h-full">
