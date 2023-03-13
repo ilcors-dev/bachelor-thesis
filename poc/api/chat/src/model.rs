@@ -5,21 +5,7 @@ use bytes::Bytes;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
-use spin_sdk::mysql::{Decode, ParameterValue};
-
-fn as_param<'a>(value: &'a Option<String>) -> Option<ParameterValue<'a>> {
-    match value {
-        Some(value) => Some(ParameterValue::Str(value.as_str())),
-        None => None,
-    }
-}
-
-fn as_nullable_param<'a>(value: &'a Option<String>) -> ParameterValue<'a> {
-    match as_param(value) {
-        Some(value) => value,
-        None => ParameterValue::DbNull,
-    }
-}
+use spin_sdk::mysql::Decode;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct CreateChat {

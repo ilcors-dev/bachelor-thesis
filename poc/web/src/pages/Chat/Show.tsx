@@ -6,7 +6,6 @@ import { Navigate, useParams } from 'react-router-dom';
 import { Message } from '../../components/Message';
 import { MessageInput } from '../../components/MessageInput';
 import { MessageLoading } from '../../components/MessageLoading';
-import { Error } from '../Error';
 
 export const Show = () => {
 	const { chatId } = useParams<{ chatId: string }>();

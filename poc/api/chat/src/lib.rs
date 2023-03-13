@@ -10,12 +10,12 @@ use model::{Chat, UpdateChat};
 use spin_sdk::{
     http::{Request, Response},
     http_component,
-    mysql::{self, Decode, ParameterValue},
+    mysql::{self, ParameterValue},
 };
 use ulid::Ulid;
 use utils::{
-    bad_request, check_user_owns, get_column_lookup, get_session_id, internal_server_error,
-    method_not_allowed, not_found, ok, unauthorized,
+    bad_request, check_user_owns, get_column_lookup, get_session_id, method_not_allowed, not_found,
+    ok, unauthorized,
 };
 
 use crate::model::CreateChat;
