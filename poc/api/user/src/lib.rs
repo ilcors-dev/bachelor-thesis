@@ -75,7 +75,7 @@ fn remove_expired_sessions(store: &mut HashMap<u64, Session>) {
 fn get_store(redis_url: &str) -> Result<HashMap<u64, Session>> {
     let cached = redis::get(&redis_url, "sessions");
 
-    let mut store: HashMap<u64, Session> = match cached {
+    let store: HashMap<u64, Session> = match cached {
         Ok(store) => {
             if store.len() == 0 {
                 HashMap::new()

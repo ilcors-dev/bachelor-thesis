@@ -14,6 +14,18 @@ redis_host = { default = "127.0.0.1" }
 redis_port = { default = "16785" }
 
 [[component]]
+id = "frontend-service"
+# forked from https://github.com/fermyon/spin-fileserver and adapted to support react router as shown here https://www.fermyon.com/blog/building-a-social-app-with-spin-2
+source = "api/frontend/build/frontend_service.wasm"
+environment = { FALLBACK_PATH = "index.html" }
+files = [ { source = "web/dist", destination = "/" } ]
+[component.trigger]
+route = "/..."
+[component.build]
+command = "npm i && npm run build"
+workdir = "web"
+
+[[component]]
 id = "session-service"
 source = "api/session/target/wasm32-wasi/release/session_service.wasm"
 allowed_http_hosts = []
@@ -79,15 +91,3 @@ workdir = "api/user"
 
 [component.config]
 db_url = "mysql://{{db_user}}:{{db_pswd}}@{{db_host}}/{{db_name}}"
-
-[[component]]
-id = "frontend-service"
-# forked from https://github.com/fermyon/spin-fileserver and adapted to support react router as shown here https://www.fermyon.com/blog/building-a-social-app-with-spin-2
-source = "api/frontend/build/frontend_service.wasm"
-environment = { FALLBACK_PATH = "index.html" }
-files = [ { source = "web/dist", destination = "/" } ]
-[component.trigger]
-route = "/..."
-[component.build]
-command = "npm run build"
-workdir = "web"

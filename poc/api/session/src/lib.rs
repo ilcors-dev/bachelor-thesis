@@ -4,13 +4,16 @@ mod utils;
 
 use anyhow::Result;
 use config::Config;
+use model::SelectSession;
+use names::Generator;
+use rand::{thread_rng, Rng};
 use spin_sdk::{
     http::{Request, Response},
     http_component,
     mysql::{self, ParameterValue},
 };
 use ulid::Ulid;
-use utils::not_found;
+use utils::{created, get_column_lookup, not_found};
 
 enum Api {
     Create,
@@ -36,16 +39,42 @@ fn api_from_request(req: Request) -> Api {
 
 fn handle_create(db_url: &str) -> Result<Response> {
     let session_id = Ulid::new().to_string();
+    let name = Generator::default().next().unwrap();
 
-    let params = vec![ParameterValue::Str(&session_id.as_str())];
+    let emoji = emojis::iter()
+        .nth(thread_rng().gen_range(0..emojis::iter().count()))
+        .unwrap()
+        .as_str();
+
+    let mut params = vec![
+        ParameterValue::Str(&session_id.as_str()),
+        ParameterValue::Str(&name),
+        ParameterValue::Str(emoji),
+    ];
 
     mysql::execute(
         db_url,
-        "INSERT INTO sessions (session_id) VALUES (?)",
+        "INSERT INTO sessions (session_id, name, emoji) VALUES (?, ?, ?)",
         &params,
     )?;
 
-    Ok(http::Response::builder()
-        .status(http::StatusCode::CREATED)
-        .body(Some(session_id.into()))?)
+    params.pop();
+    params.pop();
+
+    let row_set = mysql::query(
+        db_url,
+        "SELECT session_id, name, emoji, expires_at, created_at FROM sessions WHERE session_id = ? LIMIT 1",
+        &params,
+    )?;
+
+    let columns = get_column_lookup(&row_set.columns);
+
+    match row_set.rows.first() {
+        Some(row) => {
+            let model = SelectSession::from_row(row, &columns)?;
+
+            created(serde_json::to_string(&model)?)
+        }
+        None => not_found(),
+    }
 }

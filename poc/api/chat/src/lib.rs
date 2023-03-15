@@ -10,12 +10,12 @@ use model::{Chat, UpdateChat};
 use spin_sdk::{
     http::{Request, Response},
     http_component,
-    mysql::{self, Decode, ParameterValue},
+    mysql::{self, ParameterValue},
 };
 use ulid::Ulid;
 use utils::{
-    bad_request, check_user_owns, get_column_lookup, get_session_id, internal_server_error,
-    method_not_allowed, not_found, ok, unauthorized,
+    bad_request, check_user_owns, get_column_lookup, get_session_id, method_not_allowed, not_found,
+    ok, unauthorized,
 };
 
 use crate::model::CreateChat;
@@ -127,7 +127,10 @@ fn handle_get_list(db_url: &str) -> Result<Response> {
 
     let row_set = mysql::query(
         db_url,
-        "SELECT id, ulid, created_by, name, description, created_at, updated_at FROM chats",
+        "SELECT chats.id, chats.ulid, chats.name, chats.description, chats.created_at, chats.updated_at,
+        s.session_id as creator_id, s.name as creator_name, s.emoji as creator_emoji
+        FROM chats
+        INNER JOIN sessions as s ON chats.created_by = s.id",
         &params,
     )?;
 

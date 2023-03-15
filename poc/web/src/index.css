@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+html,
+body {
+	height: 100%;
+	padding: 0;
+	margin: 0;
+}
+
 body {
 	@apply bg-gradient-to-r from-gray-100 to-gray-300;
 }

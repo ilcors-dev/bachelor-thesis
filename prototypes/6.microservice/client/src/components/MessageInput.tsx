@@ -6,7 +6,6 @@ import { InputEmoji } from './InputEmoji';
 
 interface Props {
 	className?: string;
-	reset: () => void;
 }
 
 export const MessageInput = ({ className }: Props) => {
