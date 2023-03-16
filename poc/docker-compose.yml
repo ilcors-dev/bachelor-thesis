@@ -8,6 +8,7 @@ services:
       MYSQL_PASSWORD: bachelor
       MYSQL_ROOT_PASSWORD: bachelor
       MYSQL_DATABASE: wasi-chat
+      MYSQL_ROOT_HOST: '%'
   redis:
     image: redis:latest
     restart: always
