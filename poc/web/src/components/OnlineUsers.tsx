@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { Dropdown } from 'flowbite-react';
 import { useQuery } from 'react-query';
 
 export const OnlineUsers = () => {
@@ -15,8 +16,13 @@ export const OnlineUsers = () => {
 	);
 
 	return (
-		<div className="absolute right-2 top-2 cursor-pointer rounded-lg border border-gray-200 bg-white p-3 shadow hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
-			<p>Currently online: {Object.values(data ?? []).length}</p>
-		</div>
+		// <div className="absolute right-2 top-2 cursor-pointer rounded-lg border border-gray-200 bg-white p-3 shadow hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
+		// 	<p>Currently online: {Object.values(data ?? []).length}</p>
+		// </div>
+		<Dropdown label={`Currently online: ${Object.values(data ?? []).length}`}>
+			{data?.map((user) => (
+				<Dropdown.Item>{/* {user.} ({user.email}) */}</Dropdown.Item>
+			))}
+		</Dropdown>
 	);
 };

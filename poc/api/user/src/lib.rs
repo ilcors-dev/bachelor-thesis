@@ -9,9 +9,13 @@ use config::Config;
 use model::Session;
 use spin_sdk::{
     http::{Request, Response},
-    http_component, redis,
+    http_component,
+    mysql::{self, Decode, ParameterValue},
+    redis,
 };
-use utils::{bad_request, get_session_id, method_not_allowed, not_found, unauthorized};
+use utils::{
+    bad_request, get_column_lookup, get_session_id, method_not_allowed, not_found, unauthorized,
+};
 
 enum Api {
     Create,
@@ -34,7 +38,7 @@ fn user_service(req: Request) -> Result<Response> {
     match api_from_request(req) {
         Api::BadRequest => bad_request(),
         Api::MethodNotAllowed => method_not_allowed(),
-        Api::Create => handle_create(&cfg.redis_url, session),
+        Api::Create => handle_create(&cfg.db_url, &cfg.redis_url, session),
         Api::Get => handle_get(&cfg.redis_url),
         _ => not_found(),
     }
@@ -94,12 +98,32 @@ fn get_store(redis_url: &str) -> Result<HashMap<u64, Session>> {
     Ok(store)
 }
 
-fn handle_create(redis_url: &str, session_id: u64) -> Result<Response> {
+fn handle_create(db_url: &str, redis_url: &str, session_id: u64) -> Result<Response> {
     let mut store = get_store(redis_url)?;
 
-    let session = Session {
-        session_id,
-        last_active: chrono::Local::now().naive_utc(),
+    let row_set = mysql::query(
+        &db_url,
+        "SELECT name, emoji WHERE session_id = ?",
+        &vec![ParameterValue::Uint64(session_id)],
+    )?;
+
+    let columns = get_column_lookup(&row_set.columns);
+
+    let row = row_set.rows.first();
+
+    let session = match row {
+        Some(row) => {
+            let name = String::decode(&row[columns["ulid"]])?;
+            let emoji = String::decode(&row[columns["emoji"]])?;
+
+            Session {
+                session_id,
+                name,
+                emoji,
+                last_active: chrono::Local::now().naive_utc(),
+            }
+        }
+        None => return unauthorized(),
     };
 
     store.insert(session_id, session);
