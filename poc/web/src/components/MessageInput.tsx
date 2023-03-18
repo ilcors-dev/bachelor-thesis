@@ -8,9 +8,10 @@ import { InputEmoji } from './InputEmoji';
 
 interface Props {
 	className?: string;
+	onSubmit?: () => void;
 }
 
-export const MessageInput = ({ className }: Props) => {
+export const MessageInput = ({ className, onSubmit }: Props) => {
 	const { chatId } = useParams();
 
 	let client = useQueryClient();
@@ -25,7 +26,10 @@ export const MessageInput = ({ className }: Props) => {
 
 			return response.data as Message[];
 		},
-		onSuccess: () => client.invalidateQueries('messages'),
+		onSuccess: () => {
+			client.invalidateQueries('messages');
+			onSubmit?.();
+		},
 	});
 
 	return (

@@ -6,7 +6,7 @@ use anyhow::Result;
 use bytes::Bytes;
 use config::Config;
 use http::HeaderValue;
-use model::{Message, UpdateMessage};
+use model::{MessageWithSender, UpdateMessage};
 use spin_sdk::{
     http::{not_found, Request, Response},
     http_component,
@@ -184,15 +184,21 @@ fn handle_get_latest_from_chat(
     chat_id: u64,
     fetch_from_message_id: Option<u64>,
 ) -> Result<Response> {
+    let sql = "SELECT messages.id, messages.ulid, messages.text, messages.created_at, messages.updated_at,
+            sessions.name AS sender_name,
+            sessions.emoji AS sender_emoji
+            FROM messages
+            INNER JOIN sessions ON messages.sender_id = sessions.id";
+
     let row_set = match fetch_from_message_id {
         Some(id) => mysql::query(
             db_url,
-            "SELECT id, ulid, text, created_at, updated_at FROM messages WHERE chat_id = ? AND id > ?",
+            &(sql.to_owned() + " WHERE chat_id = ? AND id > ?"),
             &vec![ParameterValue::Uint64(chat_id), ParameterValue::Uint64(id)],
         )?,
         None => mysql::query(
             db_url,
-            "SELECT id, ulid, text, created_at, updated_at FROM messages WHERE chat_id = ?",
+            &(sql.to_owned() + " WHERE chat_id = ?"),
             &vec![ParameterValue::Uint64(chat_id)],
         )?,
     };
@@ -202,7 +208,7 @@ fn handle_get_latest_from_chat(
     let mut models = vec![];
 
     for row in row_set.rows {
-        let message = Message::from_row(&row, &columns)?;
+        let message = MessageWithSender::from_row(&row, &columns)?;
         models.push(message);
     }
 

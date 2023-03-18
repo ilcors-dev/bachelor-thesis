@@ -1,5 +1,6 @@
 import autoAnimate from '@formkit/auto-animate';
 import axios from 'axios';
+import { Tooltip } from 'flowbite-react';
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { Navigate, useParams } from 'react-router-dom';
@@ -7,6 +8,7 @@ import { Message } from '../../components/Message';
 import { MessageInput } from '../../components/MessageInput';
 import { MessageLoading } from '../../components/MessageLoading';
 import { OnlineUsers } from '../../components/OnlineUsers';
+import { useSession } from '../../hooks/useSession';
 
 export const Show = () => {
 	const { chatId } = useParams<{ chatId: string }>();
@@ -15,6 +17,7 @@ export const Show = () => {
 		return <Navigate to="/error" />;
 	}
 
+	const currentSession = useSession().offlineGet();
 	const [firstLoaded, setFirstLoaded] = useState(false);
 	const [lastMessageLoadedId, setLastMessageLoadedId] = useState<number | null>(
 		null
@@ -26,7 +29,7 @@ export const Show = () => {
 		messagesContainer.current && autoAnimate(messagesContainer.current);
 	}, [messagesContainer]);
 
-	const { isLoading, data, error, refetch } = useQuery<Message[]>(
+	const { isLoading, data, error, refetch } = useQuery<MessageWithSender[]>(
 		['messages'],
 		async () => {
 			let params: { [key: string]: number | string } = {
@@ -48,7 +51,7 @@ export const Show = () => {
 
 			setFirstLoaded(true);
 
-			return response.data as Message[];
+			return response.data as MessageWithSender[];
 		},
 		{
 			refetchInterval: 1000,
@@ -83,13 +86,43 @@ export const Show = () => {
 					<ul>
 						{data &&
 							data.map((message) => (
-								<Message key={message.id} className="my-4" message={message} />
+								<div
+									className={`flex items-center space-x-2 ${
+										message.sender.name === currentSession?.name
+											? 'justify-end'
+											: ''
+									}`}
+								>
+									{message.sender.name !== currentSession?.name && (
+										<Tooltip placement="right" content={message.sender.name}>
+											<p className="cursor-pointer text-xl">
+												{message.sender.emoji}
+											</p>
+										</Tooltip>
+									)}
+									<Message
+										key={message.id}
+										className={`my-1`}
+										message={message}
+									/>
+								</div>
 							))}
 						<div ref={bottomRef}></div>
 					</ul>
 				</div>
 				<div className="shrink-0 grow-0 basis-auto">
-					<MessageInput className="w-full" />
+					<MessageInput
+						className="w-full"
+						onSubmit={() => {
+							setTimeout(() => {
+								(
+									bottomRef.current as unknown as HTMLDivElement
+								)?.scrollIntoView({
+									behavior: 'smooth',
+								});
+							}, 50);
+						}}
+					/>
 				</div>
 			</div>
 			<OnlineUsers />

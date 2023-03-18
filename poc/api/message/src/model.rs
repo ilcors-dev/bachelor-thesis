@@ -67,3 +67,52 @@ impl Message {
         })
     }
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub(crate) struct Sender {
+    pub name: String,
+    pub emoji: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub(crate) struct MessageWithSender {
+    pub id: u64,
+    pub ulid: String,
+    pub text: String,
+    pub sender: Sender,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+}
+
+impl MessageWithSender {
+    pub fn from_row(row: &spin_sdk::mysql::Row, columns: &HashMap<&str, usize>) -> Result<Self> {
+        let id = u64::decode(&row[columns["id"]])?;
+        let ulid = String::decode(&row[columns["ulid"]])?;
+        let text = String::decode(&row[columns["text"]])?;
+
+        let sender_name = String::decode(&row[columns["sender_name"]])?;
+        let sender_emoji = String::decode(&row[columns["sender_emoji"]])?;
+
+        let created_at = NaiveDateTime::parse_from_str(
+            &String::decode(&row[columns["created_at"]])?,
+            "%Y-%m-%d %H:%M:%S",
+        )?;
+
+        let updated_at = NaiveDateTime::parse_from_str(
+            &String::decode(&row[columns["updated_at"]])?,
+            "%Y-%m-%d %H:%M:%S",
+        )?;
+
+        Ok(MessageWithSender {
+            id,
+            ulid,
+            text,
+            sender: Sender {
+                name: sender_name,
+                emoji: sender_emoji,
+            },
+            created_at,
+            updated_at,
+        })
+    }
+}
