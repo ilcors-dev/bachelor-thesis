@@ -22,6 +22,7 @@ use crate::model::CreateChat;
 
 enum Api {
     Create(model::CreateChat),
+    Show(u64),
     GetList,
     Update(model::UpdateChat),
     Delete(u64),
@@ -62,6 +63,7 @@ fn message_service(req: Request) -> Result<Response> {
         Api::BadRequest => bad_request(),
         Api::MethodNotAllowed => method_not_allowed(),
         Api::Create(model) => handle_create(&cfg.db_url, session, model),
+        Api::Show(id) => handle_show(&cfg.db_url, id),
         Api::GetList => handle_get_list(&cfg.db_url),
         Api::Update(model) => handle_update(&cfg.db_url, session, model),
         Api::Delete(id) => handle_delete_by_id(&cfg.db_url, session, id),
@@ -71,7 +73,14 @@ fn message_service(req: Request) -> Result<Response> {
 
 fn api_from_request(req: Request) -> Api {
     match *req.method() {
-        http::Method::GET => Api::GetList,
+        http::Method::GET => match req.headers().get("spin-path-info") {
+            None => Api::BadRequest,
+            Some(v) => match get_id_from_route(v) {
+                Ok(Some(id)) => Api::Show(id),
+                Ok(None) => Api::GetList,
+                Err(()) => Api::NotFound,
+            },
+        },
         http::Method::POST => {
             match CreateChat::from_bytes(req.body().as_ref().unwrap_or(&Bytes::new())) {
                 Ok(model) => Api::Create(model),
@@ -93,6 +102,32 @@ fn api_from_request(req: Request) -> Api {
             },
         },
         _ => Api::MethodNotAllowed,
+    }
+}
+
+/// Gets a chat by id and returns it as JSON
+fn handle_show(db_url: &str, chat_id: u64) -> Result<Response> {
+    let params = vec![ParameterValue::Uint64(chat_id)];
+
+    let row_set = mysql::query(
+        db_url,
+        "SELECT chats.id, chats.ulid, chats.name, chats.description, chats.created_at, chats.updated_at,
+        s.session_id as creator_id, s.name as creator_name, s.emoji as creator_emoji
+        FROM chats
+        INNER JOIN sessions as s ON chats.created_by = s.id
+        WHERE chats.id = ?",
+        &params,
+    )?;
+
+    let columns = get_column_lookup(&row_set.columns);
+
+    match row_set.rows.first() {
+        Some(row) => {
+            let model = Chat::from_row(&row, &columns)?;
+
+            ok(serde_json::to_string(&model)?)
+        }
+        None => not_found(),
     }
 }
 
