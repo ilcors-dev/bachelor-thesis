@@ -23,7 +23,6 @@ export const OnlineUsers = () => {
 		<div className="cursor-pointer">
 			<Dropdown
 				className="max-h-60 overflow-y-auto"
-				size="sm"
 				label={
 					greater('sm')
 						? `Currently online: ${Object.values(data ?? []).length}`
