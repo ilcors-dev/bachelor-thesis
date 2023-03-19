@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { Dropdown } from 'flowbite-react';
 import { useQuery } from 'react-query';
+import { useSession } from '../hooks/useSession';
 
 export const OnlineUsers = () => {
 	const { isLoading, data, error } = useQuery<OnlineUser[]>(
@@ -15,8 +16,10 @@ export const OnlineUsers = () => {
 		}
 	);
 
+	const me = useSession().offlineGet();
+
 	return (
-		<div className="absolute right-2 top-2 cursor-pointer">
+		<div className="cursor-pointer">
 			<Dropdown
 				className="max-h-60 overflow-y-auto"
 				label={`Currently online: ${Object.values(data ?? []).length}`}
@@ -24,7 +27,7 @@ export const OnlineUsers = () => {
 				{data &&
 					Object.values(data).map((user) => (
 						<Dropdown.Item>
-							{user.emoji} {user.name}
+							{user.emoji} {user.name} {me?.name === user.name ? '(you)' : ''}
 						</Dropdown.Item>
 					))}
 			</Dropdown>

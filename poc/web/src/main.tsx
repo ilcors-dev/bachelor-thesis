@@ -3,6 +3,8 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { OnlineUsers } from './components/OnlineUsers';
+import { Profile } from './components/Profile';
 import { useSession } from './hooks/useSession';
 import './index.css';
 import { Create } from './pages/Chat/Create';
@@ -65,10 +67,26 @@ axios.interceptors.response.use(
 	}
 );
 
+// ping the server every second to keep the session alive and update the online users list
+setInterval(async () => {
+	// user could not be retrieved, don't ping
+	if (!useSession().offlineGet()) {
+		return;
+	}
+
+	await useSession().ping();
+}, 1000);
+
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
 	<React.StrictMode>
 		<QueryClientProvider client={queryClient}>
-			<RouterProvider router={router} />
+			<RouterProvider router={router}></RouterProvider>
+			<div className="absolute top-2 right-2">
+				<div className="flex space-x-2">
+					<Profile />
+					<OnlineUsers />
+				</div>
+			</div>
 		</QueryClientProvider>
 	</React.StrictMode>
 );

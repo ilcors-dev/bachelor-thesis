@@ -2,7 +2,7 @@ mod config;
 mod model;
 mod utils;
 
-use std::collections::HashMap;
+use std::collections::{hash_map::Entry, HashMap};
 
 use anyhow::{anyhow, Result};
 use config::Config;
@@ -20,6 +20,7 @@ use utils::{
 enum Api {
     Create,
     Get,
+    Put,
     BadRequest,
     NotFound,
     MethodNotAllowed,
@@ -40,6 +41,7 @@ fn user_service(req: Request) -> Result<Response> {
         Api::MethodNotAllowed => method_not_allowed(),
         Api::Create => handle_create(&cfg.db_url, &cfg.redis_url, session),
         Api::Get => handle_get(&cfg.redis_url),
+        Api::Put => handle_put(&cfg.redis_url, session),
         _ => not_found(),
     }
 }
@@ -48,6 +50,7 @@ fn api_from_request(req: Request) -> Api {
     match *req.method() {
         http::Method::GET => Api::Get,
         http::Method::POST => Api::Create,
+        http::Method::PUT => Api::Put,
         _ => Api::MethodNotAllowed,
     }
 }
@@ -98,6 +101,7 @@ fn get_store(redis_url: &str) -> Result<HashMap<u64, Session>> {
     Ok(store)
 }
 
+/// Registers a new user online status in redis
 fn handle_create(db_url: &str, redis_url: &str, session_id: u64) -> Result<Response> {
     let mut store = get_store(redis_url)?;
 
@@ -140,8 +144,35 @@ fn handle_create(db_url: &str, redis_url: &str, session_id: u64) -> Result<Respo
         .body(Some(serde_json::to_string(&store)?.into()))?)
 }
 
+/// Returns the sessions stored in redis as a json
 fn handle_get(redis_url: &str) -> Result<Response> {
     Ok(http::Response::builder()
         .status(http::StatusCode::OK)
         .body(Some(serde_json::to_string(&get_store(redis_url)?)?.into()))?)
+}
+
+/// Updates the last_active timestamp of the session
+///
+/// If the session does not exist, return an internal server error
+fn handle_put(redis_url: &str, session_id: u64) -> Result<Response> {
+    let mut store = get_store(redis_url)?;
+
+    match store
+        .entry(session_id)
+        .and_modify(|session| session.last_active = chrono::Local::now().naive_utc())
+    {
+        Entry::Occupied(entry) => entry.into_mut(),
+        Entry::Vacant(_) => return internal_server_error(),
+    };
+
+    // remove expired sessions
+    remove_expired_sessions(&mut store);
+
+    let json = serde_json::to_string(&store).map_err(|_| anyhow!("Serialize Error"))?;
+
+    redis::set(&redis_url, "sessions", json.as_bytes()).map_err(|_| anyhow!("Redis Error"))?;
+
+    Ok(http::Response::builder()
+        .status(http::StatusCode::OK)
+        .body(Some(serde_json::to_string(&store)?.into()))?)
 }
