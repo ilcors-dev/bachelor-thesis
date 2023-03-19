@@ -8,7 +8,7 @@ use anyhow::{anyhow, Result};
 use config::Config;
 use model::Session;
 use spin_sdk::{
-    http::{Request, Response},
+    http::{internal_server_error, Request, Response},
     http_component,
     mysql::{self, Decode, ParameterValue},
     redis,
@@ -103,7 +103,7 @@ fn handle_create(db_url: &str, redis_url: &str, session_id: u64) -> Result<Respo
 
     let row_set = mysql::query(
         &db_url,
-        "SELECT name, emoji WHERE session_id = ?",
+        "SELECT name, emoji FROM sessions WHERE id = ?",
         &vec![ParameterValue::Uint64(session_id)],
     )?;
 
@@ -113,7 +113,7 @@ fn handle_create(db_url: &str, redis_url: &str, session_id: u64) -> Result<Respo
 
     let session = match row {
         Some(row) => {
-            let name = String::decode(&row[columns["ulid"]])?;
+            let name = String::decode(&row[columns["name"]])?;
             let emoji = String::decode(&row[columns["emoji"]])?;
 
             Session {
@@ -123,7 +123,7 @@ fn handle_create(db_url: &str, redis_url: &str, session_id: u64) -> Result<Respo
                 last_active: chrono::Local::now().naive_utc(),
             }
         }
-        None => return unauthorized(),
+        None => return internal_server_error(),
     };
 
     store.insert(session_id, session);
