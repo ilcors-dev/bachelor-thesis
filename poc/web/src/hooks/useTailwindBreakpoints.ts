@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-const screens = {
+const screens: { [key: string]: number } = {
 	sm: 640,
 	md: 768,
 	lg: 1024,
