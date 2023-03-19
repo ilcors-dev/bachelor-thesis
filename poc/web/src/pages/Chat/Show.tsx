@@ -85,7 +85,7 @@ export const Show = () => {
 				<div className="my-2.5 h-full shrink grow basis-0 overflow-y-auto">
 					<ul>
 						{data &&
-							data.map((message) => (
+							data.map((message, i) => (
 								<div
 									className={`flex items-center space-x-2 ${
 										message.sender.name === currentSession?.name
@@ -100,11 +100,7 @@ export const Show = () => {
 											</p>
 										</Tooltip>
 									)}
-									<Message
-										key={message.id}
-										className={`my-1`}
-										message={message}
-									/>
+									<Message key={i} className={`my-1`} message={message} />
 								</div>
 							))}
 						<div ref={bottomRef}></div>

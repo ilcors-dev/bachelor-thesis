@@ -80,7 +80,7 @@ setInterval(async () => {
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
 	<React.StrictMode>
 		<QueryClientProvider client={queryClient}>
-			<RouterProvider router={router}></RouterProvider>
+			<RouterProvider router={router} />
 			<div className="absolute top-2 right-2">
 				<div className="flex space-x-2">
 					<Profile />
