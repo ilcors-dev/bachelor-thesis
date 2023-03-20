@@ -1,4 +1,4 @@
-import autoAnimate from '@formkit/auto-animate';
+import { useAutoAnimate } from '@formkit/auto-animate/react';
 import axios from 'axios';
 import { Tooltip } from 'flowbite-react';
 import { useEffect, useRef, useState } from 'react';
@@ -8,7 +8,6 @@ import { ChatTitleLoader } from '../../components/ChatTitleLoader';
 import { Message } from '../../components/Message';
 import { MessageInput } from '../../components/MessageInput';
 import { MessageLoading } from '../../components/MessageLoading';
-import { OnlineUsers } from '../../components/OnlineUsers';
 import { useSession } from '../../hooks/useSession';
 
 export const Show = () => {
@@ -23,8 +22,8 @@ export const Show = () => {
 	const [lastMessageLoadedId, setLastMessageLoadedId] = useState<number | null>(
 		null
 	);
-	const messagesContainer = useRef(null);
 	const bottomRef = useRef(null);
+	const [animationParent] = useAutoAnimate();
 
 	const { isLoading, data, error, refetch } = useQuery<MessageWithSender[]>(
 		['messages'],
@@ -52,17 +51,6 @@ export const Show = () => {
 		},
 		{
 			refetchInterval: 1000,
-			// onSuccess: (messages) => {
-			// 	if (!messages || messages.length === 0) {
-			// 		return;
-			// 	}
-
-			// 	setTimeout(() => {
-			// 		(bottomRef.current as unknown as HTMLDivElement)?.scrollIntoView({
-			// 			behavior: 'smooth',
-			// 		});
-			// 	}, 50);
-			// },
 		}
 	);
 
@@ -71,10 +59,6 @@ export const Show = () => {
 
 		return response.data as Chat;
 	});
-
-	useEffect(() => {
-		messagesContainer.current && autoAnimate(messagesContainer.current);
-	}, [messagesContainer]);
 
 	useEffect(() => {
 		if (!data) {
@@ -103,7 +87,7 @@ export const Show = () => {
 				</div>
 				{isLoading && <MessageLoading />}
 				<div className="my-2.5 h-full shrink grow basis-0 overflow-y-auto">
-					<ul>
+					<ul ref={animationParent}>
 						{data &&
 							data.map((message, i) => (
 								<div
@@ -112,6 +96,7 @@ export const Show = () => {
 											? 'justify-end'
 											: ''
 									}`}
+									key={i}
 								>
 									{message.sender.name !== currentSession?.name && (
 										<Tooltip placement="right" content={message.sender.name}>
@@ -141,7 +126,6 @@ export const Show = () => {
 					/>
 				</div>
 			</div>
-			<OnlineUsers />
 		</>
 	);
 };
