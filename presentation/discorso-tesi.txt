@@ -1,0 +1,65 @@
+0
+Durante la presentazione parleremo dello sviluppo di applicazioni basate su webassembly system interface, abbreviato
+WASI
+1
+gli obiettivi principali della tesi sono stati di studiare webassembly in contesti non-browser, capirne le
+potenzialità in ambiente cloud e infine sviluppare un prototipo volto a studiare l'effettiva realizzabilità e stato
+della tecnologia
+2
+per fare ciò dobbiamo prima capire cos'è webassembly: webassembly è un formato bytecode sviluppato dal consorzio W3C
+nato per migliorare le performance delle applicazioni web scritte in javascript, un linguaggio interpretato eseguito
+nella vm dei browser perfetto per la costruzione di interfacce utente ma non per operazioni che richiedono un alto
+livello di complessità come il rendering 3D, l'elaborazioni di immagini ed in generale l'esecuzione di algoritmi
+complessi. Webassembly è un linguaggio sviluppato per il web, simile al codice macchina assembly ma indipendente
+dall'architettura sottostante, può essere essere generato da più linguaggi di programmazione diversi che siano questi
+compilati od interpretati, viene eseguito in una sandbox perchè non si vuole permettere a codice arbitrario scaricato da
+internet di agire incontrollato ed è leggero per garantire un veloce download e caricamento delle applicazioni che
+tipicamente vengono abbandonate dagli utenti se non caricate entro 2 o 3 secondi.
+3
+WASI, ovvero una system interface per webassembly, è uno standard che vuole portare le applicazioni wasm al di fuori del
+contesto web in cui è ovviamente necessario poter interagire con funzionalità come il filesystem, le socket, la memoria
+e così via. Queste interfacce ed api non sono altro che un layer intermedio in grado di definire l'interazione delle
+applicazioni webassembly con il sistema operativo sottostante. L'effettiva interazione è poi implementata dai runtime,
+ovvero applicazioni in grado di comprendere il codice webassembly, che fungono da veri e propri sistemi operativi per le
+applicazioni wasm in grado di mediare l'interazione tra queste e il sistema operativo reale sottostante.
+4
+I runtime si focalizzano su due aspetti principali: la portabilità e la sicurezza. La portabilità con wasm viene intesa
+come in Java attraverso il concetto di WORA (write once run anywhere) in cui l'obiettivo è quello di compilare le
+applicazioni una volta soltanto e lasciare il compito ai compilatori all'interno dei runtime di tradurre il codice wasm
+in linguaggio macchina eseguibile dalla CPU del sistema. Oltre a occuparsi della compilazione, i runtime, gestiscono le
+applicazioni wasm ponendole in una sandbox, in modo che queste non possano direttamente interagire con il sistema
+sottostante ma sono obbligate a passare attraverso le api fornite dal runtime stesso. Questo permette di garantire una
+maggiore sicurezza, in quanto il runtime può assegnare a priori i permessi, ovvero le capabilities, che le applicazioni
+wasm possono avere.
+5
+Un caso d'uso interessante per wasm è l'ambiente cloud, in cui viene addirittura definito come la terza ondata del cloud
+computing, perchè porta alcune migliorie ai due principali attori presenti in questo ambiente: le vm e i container.
+Possiamo definire le vm come i pesi massimi del cloud, i container come i pesi medi e le applicazioni webassembly come i
+pesi leggeri perchè al contrario delle prime due, sono indipendenti dalla piattaforma e dall'architettura della CPU,
+gestiscono la sicurezza in modo molto forte dato che by default non hanno alcun accesso con l'esterno e più leggeri in
+quanto non hanno bisogno di includere un kernel, un sistema operativo o altre dipendenze per poter essere funzionare
+6
+queste caratteristiche hanno portato allo sviluppo di un prototipo che utilizza codice webassembly, ricordiamo in origine
+pensato per essere eseguito all'interno dei siti internet, per gestire un servizio backend di una chat costruita 
+seguendo un'archietettura a microservizi. Per chi volesse è possibile visualizzarla online inquadrando il qr code che
+vedete nella pagina.
+7
+Questa applicazione è stata messa a confronto con un'altra, uguale nelle funzionalità, sviluppata in NodeJS e se ne sono
+tratti 4 principali risultati: 2 misurabili e 2 non. i primi due sono visualizzabili nella slide e riguardano l'impatto
+su disco e le performance nell'inserimento dei messaggi nel database. Come si può notare c'è una notevole differenza per
+quanto riguarda l'impatto su disco delle due soluzioni, in cui webassembly risulta vincitore la cui conseguenza è una
+maggiore facilità nel deployment e una maggiore rapidità sulla scalabilità del servizio.
+La seconda invece riguarda le performance, in cui webassembly risulta essere più lento rispetto alla controparte
+NodeJS. Il terzo e quarto risultato sono derivabili invece dalle caratteristiche di wasi infatti, il servizio
+webassembly può essere scritto in qualsiasi linguaggio di programmazione che possa essere compilato in wasm, mentre la
+controparte NodeJS richiede l'utilizzo di javascript. Il secondo è dovuto al fatto che qualora ci fosse una vulnerabilità
+all'interno del codice sviluppato o in una delle dipendenze dell'applicazione, il servizio NodeJS sarebbe sicuramente
+compromesso mentre il servizio webassembly sarebbe, per le sue caratteristiche, meno esposto.
+8
+In conclusione, l'esperienza del prototipo ha dimostrato che WASI è ancora acerbo ed in quanto standard sta richiedendo
+molto tempo per essere definito, ciò comporta che l'ecosistema sia ancora molto piccolo e le applicazioni sviluppate
+debbano ricorrere a implementazioni custom per poter funzionare. Banalmente, basti pensare che sia le socket, che i
+thread non sono ancora ufficialmente supportati da WASI e sono ancora in una fase preliminare di discussione. D'altra
+parte è utile notare che offre forti garanzie di sicurezza, permette di usare più linguaggi di programmazione, di
+eseguire, a partire da una stessa codebase, applicazioni su tante piattaforme diverse e di essere più facilmente 
+caricato e scalato rispetto alle vm e ai container.
