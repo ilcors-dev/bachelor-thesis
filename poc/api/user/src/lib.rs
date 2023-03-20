@@ -161,8 +161,8 @@ fn handle_put(redis_url: &str, session_id: u64) -> Result<Response> {
         .entry(session_id)
         .and_modify(|session| session.last_active = chrono::Local::now().naive_utc())
     {
-        Entry::Occupied(entry) => entry.into_mut(),
-        Entry::Vacant(_) => return internal_server_error(),
+        Entry::Occupied(_) => {}
+        Entry::Vacant(_) => return not_found(),
     };
 
     // remove expired sessions

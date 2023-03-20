@@ -15,7 +15,7 @@ session=$(/bin/bash "$pwd"/session_seeder.sh)
 
 curl -s -o /dev/null -w "%{http_code}" -X POST $scheme://$host/api/chats \
     -H 'Content-Type: application/json' \
-    -H 'session_id: '"$session"'' \
+    -H 'Session-Id: '"$session"'' \
     -d '{ "name": "test" }' &>/dev/null
 
 # return both the chat id and the session id

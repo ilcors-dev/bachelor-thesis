@@ -47,7 +47,7 @@ axios.interceptors.request.use(async (config) => {
 			return config;
 		}
 
-		config.headers.session_id = session.session_id;
+		config.headers['Session-Id'] = session.session_id;
 	} catch (error) {
 		alert('Failed to fetch session');
 	}

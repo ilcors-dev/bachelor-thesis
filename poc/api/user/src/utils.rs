@@ -37,7 +37,7 @@ pub(crate) fn get_column_lookup<'a>(columns: &'a Vec<Column>) -> HashMap<&'a str
 /// Get the session id from the request header.
 pub(crate) fn get_session_id(db_url: &str, req: &Request) -> Option<u64> {
     req.headers()
-        .get("session_id")
+        .get("Session-Id")
         .and_then(|header_value| header_value.to_str().ok())
         .map(|value| {
             let params = vec![ParameterValue::Str(value)];
