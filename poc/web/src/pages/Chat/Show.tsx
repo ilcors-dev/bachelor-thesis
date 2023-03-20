@@ -4,6 +4,7 @@ import { Tooltip } from 'flowbite-react';
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { Navigate, useParams } from 'react-router-dom';
+import { ChatTitleLoader } from '../../components/ChatTitleLoader';
 import { Message } from '../../components/Message';
 import { MessageInput } from '../../components/MessageInput';
 import { MessageLoading } from '../../components/MessageLoading';
@@ -24,10 +25,6 @@ export const Show = () => {
 	);
 	const messagesContainer = useRef(null);
 	const bottomRef = useRef(null);
-
-	useEffect(() => {
-		messagesContainer.current && autoAnimate(messagesContainer.current);
-	}, [messagesContainer]);
 
 	const { isLoading, data, error, refetch } = useQuery<MessageWithSender[]>(
 		['messages'],
@@ -69,6 +66,16 @@ export const Show = () => {
 		}
 	);
 
+	const chatQuery = useQuery<Chat>(['chat', chatId], async () => {
+		const response = await axios.get(`/api/chats/${chatId}`);
+
+		return response.data as Chat;
+	});
+
+	useEffect(() => {
+		messagesContainer.current && autoAnimate(messagesContainer.current);
+	}, [messagesContainer]);
+
 	useEffect(() => {
 		if (!data) {
 			return;
@@ -80,12 +87,25 @@ export const Show = () => {
 	return (
 		<>
 			<div className="flex h-full flex-col py-8">
-				<h1 className="text-4xl font-bold">Chat</h1>
+				<div className="mb-4">
+					{chatQuery.isLoading && <ChatTitleLoader />}
+					{!chatQuery.isLoading && (
+						<div>
+							<h1 className="text-4xl font-bold">
+								Chat {chatQuery.data?.name}
+							</h1>
+							<small>
+								created by: {chatQuery.data?.created_by.emoji}{' '}
+								{chatQuery.data?.created_by.name}
+							</small>
+						</div>
+					)}
+				</div>
 				{isLoading && <MessageLoading />}
 				<div className="my-2.5 h-full shrink grow basis-0 overflow-y-auto">
 					<ul>
 						{data &&
-							data.map((message) => (
+							data.map((message, i) => (
 								<div
 									className={`flex items-center space-x-2 ${
 										message.sender.name === currentSession?.name
@@ -100,11 +120,7 @@ export const Show = () => {
 											</p>
 										</Tooltip>
 									)}
-									<Message
-										key={message.id}
-										className={`my-1`}
-										message={message}
-									/>
+									<Message key={i} className={`my-1`} message={message} />
 								</div>
 							))}
 						<div ref={bottomRef}></div>

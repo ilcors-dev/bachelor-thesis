@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { Dropdown } from 'flowbite-react';
 import { useQuery } from 'react-query';
+import { useSession } from '../hooks/useSession';
+import { greater } from '../hooks/useTailwindBreakpoints';
 
 export const OnlineUsers = () => {
 	const { isLoading, data, error } = useQuery<OnlineUser[]>(
@@ -15,14 +17,25 @@ export const OnlineUsers = () => {
 		}
 	);
 
+	const me = useSession().offlineGet();
+
 	return (
-		// <div className="absolute right-2 top-2 cursor-pointer rounded-lg border border-gray-200 bg-white p-3 shadow hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
-		// 	<p>Currently online: {Object.values(data ?? []).length}</p>
-		// </div>
-		<Dropdown label={`Currently online: ${Object.values(data ?? []).length}`}>
-			{data?.map((user) => (
-				<Dropdown.Item>{/* {user.} ({user.email}) */}</Dropdown.Item>
-			))}
-		</Dropdown>
+		<div className="cursor-pointer">
+			<Dropdown
+				className="max-h-60 overflow-y-auto"
+				label={
+					greater('sm')
+						? `Currently online: ${Object.values(data ?? []).length}`
+						: `online: ${Object.values(data ?? []).length}`
+				}
+			>
+				{data &&
+					Object.values(data).map((user, i) => (
+						<Dropdown.Item key={i}>
+							{user.emoji} {user.name} {me?.name === user.name ? '(you)' : ''}
+						</Dropdown.Item>
+					))}
+			</Dropdown>
+		</div>
 	);
 };

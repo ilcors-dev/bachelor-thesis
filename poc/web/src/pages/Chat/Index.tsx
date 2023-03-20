@@ -33,7 +33,6 @@ export const Index = (): JSX.Element => {
 					</Link>
 				</div>
 			</div>
-			<OnlineUsers />
 		</>
 	);
 };

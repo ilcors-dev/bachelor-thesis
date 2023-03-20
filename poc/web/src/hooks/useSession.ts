@@ -77,8 +77,24 @@ const offlineGet = () => {
 	return JSON.parse(cached) as Session;
 };
 
+/**
+ * Pings the session to keep it alive
+ */
+const ping = async () => {
+	try {
+		const response = await axios.put('/api/users');
+
+		if (!response) {
+			throw new Error('Failed to ping session');
+		}
+	} catch (error) {
+		console.error(error);
+	}
+};
+
 export const useSession = () => ({
 	setup,
 	get,
 	offlineGet,
+	ping,
 });
