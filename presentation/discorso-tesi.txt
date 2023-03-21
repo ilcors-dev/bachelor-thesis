@@ -37,7 +37,7 @@ computing, perchè porta alcune migliorie ai due principali attori presenti in q
 Possiamo definire le vm come i pesi massimi del cloud, i container come i pesi medi e le applicazioni webassembly come i
 pesi leggeri perchè al contrario delle prime due, sono indipendenti dalla piattaforma e dall'architettura della CPU,
 gestiscono la sicurezza in modo molto forte dato che by default non hanno alcun accesso con l'esterno e più leggeri in
-quanto non hanno bisogno di includere un kernel, un sistema operativo o altre dipendenze per poter essere funzionare
+quanto non hanno bisogno di includere un kernel, un sistema operativo o altre dipendenze per poter funzionare
 6
 queste caratteristiche hanno portato allo sviluppo di un prototipo che utilizza codice webassembly, ricordiamo in origine
 pensato per essere eseguito all'interno dei siti internet, per gestire un servizio backend di una chat costruita 
@@ -60,6 +60,9 @@ In conclusione, l'esperienza del prototipo ha dimostrato che WASI è ancora acer
 molto tempo per essere definito, ciò comporta che l'ecosistema sia ancora molto piccolo e le applicazioni sviluppate
 debbano ricorrere a implementazioni custom per poter funzionare. Banalmente, basti pensare che sia le socket, che i
 thread non sono ancora ufficialmente supportati da WASI e sono ancora in una fase preliminare di discussione. D'altra
-parte è utile notare che offre forti garanzie di sicurezza, permette di usare più linguaggi di programmazione, di
+parte è utile notare che le garanzie di sicurezza, di interoperabilità, portabilità e leggerezza che offre WASI sono
+sicuramente un buon punto di partenza per lo sviluppo futuro di applicazioni sia in ambito cloud che non.
+
+offre forti garanzie di sicurezza, permette di usare più linguaggi di programmazione, di
 eseguire, a partire da una stessa codebase, applicazioni su tante piattaforme diverse e di essere più facilmente 
 caricato e scalato rispetto alle vm e ai container.
