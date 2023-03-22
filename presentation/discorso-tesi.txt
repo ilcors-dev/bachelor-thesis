@@ -11,10 +11,10 @@ nato per migliorare le performance delle applicazioni web scritte in javascript,
 nella vm dei browser perfetto per la costruzione di interfacce utente ma non per operazioni che richiedono un alto
 livello di complessità come il rendering 3D, l'elaborazioni di immagini ed in generale l'esecuzione di algoritmi
 complessi. Webassembly è un linguaggio sviluppato per il web, simile al codice macchina assembly ma indipendente
-dall'architettura sottostante, può essere essere generato da più linguaggi di programmazione diversi che siano questi
-compilati od interpretati, viene eseguito in una sandbox perchè non si vuole permettere a codice arbitrario scaricato da
-internet di agire incontrollato ed è leggero per garantire un veloce download e caricamento delle applicazioni che
-tipicamente vengono abbandonate dagli utenti se non caricate entro 2 o 3 secondi.
+dall'architettura sottostante, può essere generato da più linguaggi di programmazione diversi che siano questi compilati
+od interpretati, viene eseguito in una sandbox perchè non si vuole permettere a codice arbitrario scaricato da internet
+di agire incontrollato ed è leggero per garantire un veloce download e caricamento delle applicazioni che tipicamente
+vengono abbandonate dagli utenti se non caricate entro 2 o 3 secondi.
 3
 WASI, ovvero una system interface per webassembly, è uno standard che vuole portare le applicazioni wasm al di fuori del
 contesto web in cui è ovviamente necessario poter interagire con funzionalità come il filesystem, le socket, la memoria
@@ -28,7 +28,7 @@ come in Java attraverso il concetto di WORA (write once run anywhere) in cui l'o
 applicazioni una volta soltanto e lasciare il compito ai compilatori all'interno dei runtime di tradurre il codice wasm
 in linguaggio macchina eseguibile dalla CPU del sistema. Oltre a occuparsi della compilazione, i runtime, gestiscono le
 applicazioni wasm ponendole in una sandbox, in modo che queste non possano direttamente interagire con il sistema
-sottostante ma sono obbligate a passare attraverso le api fornite dal runtime stesso. Questo permette di garantire una
+sottostante ma siano obbligate a passare attraverso le api fornite dal runtime stesso. Questo permette di garantire una
 maggiore sicurezza, in quanto il runtime può assegnare a priori i permessi, ovvero le capabilities, che le applicazioni
 wasm possono avere.
 5
@@ -66,3 +66,10 @@ sicuramente un buon punto di partenza per lo sviluppo futuro di applicazioni sia
 offre forti garanzie di sicurezza, permette di usare più linguaggi di programmazione, di
 eseguire, a partire da una stessa codebase, applicazioni su tante piattaforme diverse e di essere più facilmente 
 caricato e scalato rispetto alle vm e ai container.
+
+
+note prof 22/03:
+- piccolo discorso iniziale per giustificare wasi lato server e non webbrowser, spiegare il trend per sviluppo di applicazioni distribuite sia client che server (parte 6)
+- dire più esplicitamente cosa ho fatto io, introduzione più forte (parte 7)
+- dire esplicitamente ordinata dei grafici tempi di risposta e utilizzo di cpu percentuale (parte 8)
+- parola web con W maiuscola (generale)
