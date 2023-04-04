@@ -1,9 +1,0 @@
--- Your SQL goes here
-CREATE TABLE
-    messages (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        ulid CHAR(26),
-        text LONGTEXT,
-        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    );
