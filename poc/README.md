@@ -28,7 +28,7 @@ To run the application, you need to have the following tools installed:
 
 [Backend]
 - [Rust](https://www.rust-lang.org/tools/install)
-- [Wasmtime](https://wasmtime.dev/)
+- [Wasmtime v5.0.1](https://github.com/bytecodealliance/wasmtime/releases/tag/v5.0.1)
 - [Spin Framework v0.10.1](https://github.com/fermyon/spin/releases/tag/v0.10.1)
 - [Docker](https://docs.docker.com/get-docker/)
 - [Docker Compose](https://docs.docker.com/compose/install/)\
@@ -60,3 +60,8 @@ Steps:
 5. Open the application in your browser at http://localhost:3000
 
 You can now run the application & play with it.
+
+## Warning
+
+Since the Wasm+WASI ecosystem is gaining momentum, the application may not work as expected if you use a different version
+of the tools mentioned above, particularly the Wasmtime & Spin Framework versions.
